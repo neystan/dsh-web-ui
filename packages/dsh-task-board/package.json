@@ -1,6 +1,6 @@
 {
   "name": "@linxin666/dsh-client-ui-task-board",
-  "description": "Task board for the dsh web GUI: a sidebar entry plus a multi-column kanban view with host persistence, scheduled runs (host cron scheduler), durable todos, real execution through host agent sessions, and agent tools (cron_create / cron_list / cron_pause / cron_resume / cron_delete / cron_run + todo_add / todo_list / todo_done / todo_delete). Hot-pluggable — mounted via ~/.dsh/cordis.patch.yml + a profile node_modules symlink, no dsh source changes.",
+  "description": "Task board for the dsh web GUI: a sidebar entry plus a multi-column kanban view with host persistence, scheduled runs (host cron scheduler), durable todos, real execution through host agent sessions, and agent tools (the cron tool with action=create/list/pause/resume/run/delete + the todo tool with action=add/list/done/delete). Hot-pluggable — mounted via ~/.dsh/cordis.patch.yml + a profile node_modules symlink, no dsh source changes.",
   "version": "0.1.15",
   "type": "module",
   "main": "lib/index.js",
@@ -9,10 +9,6 @@
     ".": {
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
-    },
-    "./invariant": {
-      "types": "./lib/types/invariant.d.ts",
-      "default": "./lib/invariant.js"
     },
     "./client": {
       "types": "./lib/types/client/index.d.ts",

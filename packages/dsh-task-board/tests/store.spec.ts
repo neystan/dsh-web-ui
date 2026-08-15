@@ -57,6 +57,17 @@ describe('LocalStorageTaskStore', () => {
     expect(store.load()).toEqual([])
   })
 
+  it('deleteTask removes exactly one task from the stored document', () => {
+    const storage = new FakeStorage()
+    const store = new LocalStorageTaskStore('k', storage)
+    store.save(sampleLedger())
+    store.deleteTask('t-1')
+    expect(store.load().map(task => task.id)).toEqual(['t-2'])
+    // Deleting an unknown id leaves the document untouched.
+    store.deleteTask('missing')
+    expect(store.load().map(task => task.id)).toEqual(['t-2'])
+  })
+
   it('tolerates storage absence (no storage, no throw)', () => {
     const store = new LocalStorageTaskStore('k', undefined)
     expect(store.load()).toEqual([])
@@ -174,6 +185,13 @@ describe('InMemoryTaskStore', () => {
     store.clear()
     expect(store.load()).toEqual([])
   })
+
+  it('deleteTask removes exactly one task', () => {
+    const store = new InMemoryTaskStore()
+    store.save(sampleLedger())
+    store.deleteTask('t-1')
+    expect(store.load().map(task => task.id)).toEqual(['t-2'])
+  })
 })
 
 describe('schedule persistence', () => {
@@ -182,18 +200,38 @@ describe('schedule persistence', () => {
     const store = new LocalStorageTaskStore('k', storage)
     const task = withSchedule(
       createTask({ title: 'A', description: '', prompt: '' }, 1, 't-1'),
-      { enabled: true, cron: '0 9 * * *', nextRunAt: 100, lastTriggeredAt: 50 },
+      { enabled: true, recurring: true, cron: '0 9 * * *', nextRunAt: 100, lastTriggeredAt: 50 },
       2,
     )
     store.save([task])
     expect(store.load()[0].schedule).toEqual({
-      enabled: true, cron: '0 9 * * *', nextRunAt: 100, lastTriggeredAt: 50,
+      enabled: true, recurring: true, cron: '0 9 * * *', nextRunAt: 100, lastTriggeredAt: 50,
     })
   })
 
   it('keeps legacy tasks without a schedule intact', () => {
     const raw = JSON.stringify([createTask({ title: 'A', description: '', prompt: '' }, 1, 't-1')])
     expect(parseLedger(raw)[0].schedule).toBeUndefined()
+  })
+
+  it('migrates a v1 onceAt row into a v2 one-shot rule', () => {
+    const valid = createTask({ title: 'ok', description: '', prompt: '' }, 1, 't-1')
+    const raw = JSON.stringify([
+      { ...valid, id: 't-1', schedule: { enabled: true, cron: '', onceAt: 500, nextRunAt: undefined, lastTriggeredAt: undefined } },
+    ])
+    expect(parseLedger(raw)[0].schedule).toEqual({
+      enabled: true, recurring: false, cron: '', nextRunAt: 500, lastTriggeredAt: undefined,
+    })
+  })
+
+  it('keeps a fired v2 one-shot (consumed trigger) instead of dropping it', () => {
+    const valid = createTask({ title: 'ok', description: '', prompt: '' }, 1, 't-1')
+    const raw = JSON.stringify([
+      { ...valid, id: 't-1', schedule: { enabled: true, recurring: false, cron: '', nextRunAt: undefined, lastTriggeredAt: 9 } },
+    ])
+    expect(parseLedger(raw)[0].schedule).toEqual({
+      enabled: true, recurring: false, cron: '', nextRunAt: undefined, lastTriggeredAt: 9,
+    })
   })
 
   it('repairs a malformed schedule instead of dropping the task row', () => {
@@ -207,7 +245,7 @@ describe('schedule persistence', () => {
     const parsed = parseLedger(JSON.stringify(raw))
     expect(parsed).toHaveLength(4) // no row dropped for a bad schedule
     expect(parsed[0].schedule).toEqual({
-      enabled: false, cron: '0 9 * * *', nextRunAt: undefined, lastTriggeredAt: 5,
+      enabled: false, recurring: true, cron: '0 9 * * *', nextRunAt: undefined, lastTriggeredAt: 5,
     })
     expect(parsed[1].schedule).toBeUndefined() // blank cron → schedule dropped
     expect(parsed[2].schedule).toBeUndefined() // non-object schedule → dropped
@@ -222,7 +260,7 @@ describe('schedule persistence', () => {
       { ...valid, id: 't-3', schedule: { enabled: true, cron: '99 99 99 99 99' } },
     ]
     const parsed = parseLedger(JSON.stringify(raw))
-    expect(parsed[0].schedule).toEqual({ enabled: true, cron: '0 9 * * *', nextRunAt: undefined, lastTriggeredAt: undefined })
+    expect(parsed[0].schedule).toEqual({ enabled: true, recurring: true, cron: '0 9 * * *', nextRunAt: undefined, lastTriggeredAt: undefined })
     expect(parsed[1].schedule).toBeUndefined() // not five fields
     expect(parsed[2].schedule).toBeUndefined() // values out of range
   })

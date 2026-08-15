@@ -66,24 +66,48 @@ const SCHEDULE_PRESETS: ReadonlyArray<{ cron: string; label: TaskBoardKey }> = [
   { cron: '0 9 * * 1', label: 'detail.schedule.preset.weeklyMon9' },
 ]
 
-/** The scheduled-runs editor: enable toggle, cron input + presets, next-run info. */
+/** ms epoch → `<input type="datetime-local">` value (local time). */
+function toLocalInput(ms: number): string {
+  const date = new Date(ms)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** `<input type="datetime-local">` value → ms epoch (parsed as local time). */
+function parseLocalInput(value: string): number | undefined {
+  if (value.trim() === '') return undefined
+  const ms = new Date(value).getTime()
+  return Number.isNaN(ms) ? undefined : ms
+}
+
+/**
+ * The scheduled-runs editor: enable toggle, mode switch (recurring cron /
+ * one-shot trigger), the mode-specific editor (cron input + presets, or a
+ * local-time picker), and next/last-run info. The mode switch persists
+ * immediately (with the current editor value), so the ledger never drifts
+ * from what the editor shows.
+ */
 function ScheduleSection({ controller, task }: { controller: BoardController; task: TaskRecord }) {
   const schedule = task.schedule
-  const [cron, setCron] = useState(schedule?.cron ?? '0 9 * * *')
+  const [mode, setMode] = useState<'recurring' | 'once'>(schedule?.recurring === false ? 'once' : 'recurring')
+  const [cron, setCron] = useState(schedule?.cron !== '' ? (schedule?.cron ?? '0 9 * * *') : '0 9 * * *')
+  const [onceTime, setOnceTime] = useState(() => toLocalInput(schedule?.nextRunAt ?? Date.now() + 60 * 60_000))
   const [enabled, setEnabled] = useState(schedule?.enabled ?? false)
   const [nextRunAt, setNextRunAt] = useState<number | undefined>(schedule?.nextRunAt)
   const [lastTriggeredAt, setLastTriggeredAt] = useState<number | undefined>(schedule?.lastTriggeredAt)
   const [error, setError] = useState<string | undefined>(undefined)
 
   // Keep the editor in sync when the task record changes underneath (the
-  // schedule rolls forward as runs trigger).
+  // schedule rolls forward as runs trigger, or the mode switch persists).
   useEffect(() => {
-    setCron(schedule?.cron ?? '0 9 * * *')
-    setEnabled(schedule?.enabled ?? false)
-    setNextRunAt(schedule?.nextRunAt)
-    setLastTriggeredAt(schedule?.lastTriggeredAt)
+    const current = task.schedule
+    setMode(current?.recurring === false ? 'once' : 'recurring')
+    setCron(current?.cron !== '' ? (current?.cron ?? '0 9 * * *') : '0 9 * * *')
+    setEnabled(current?.enabled ?? false)
+    setNextRunAt(current?.nextRunAt)
+    setLastTriggeredAt(current?.lastTriggeredAt)
     setError(undefined)
-  }, [task.id, schedule?.enabled, schedule?.cron, schedule?.nextRunAt, schedule?.lastTriggeredAt])
+  }, [task.id, task.schedule?.enabled, task.schedule?.recurring, task.schedule?.cron, task.schedule?.nextRunAt, task.schedule?.lastTriggeredAt])
 
   /** Validate + persist the current cron text (Enter or blur). */
   const saveCron = (value: string): void => {
@@ -97,15 +121,60 @@ function ScheduleSection({ controller, task }: { controller: BoardController; ta
     controller.setSchedule(task.id, { cron: trimmed })
   }
 
-  /** Arm/disarm the schedule (arming first persists the edited cron). */
-  const toggleEnabled = (next: boolean): void => {
-    const trimmed = cron.trim()
-    if (next && (trimmed === '' || !isValidCron(trimmed))) {
-      setError(t('detail.schedule.invalid'))
+  /** Validate + persist the current one-shot trigger time (Enter or blur). */
+  const saveOnce = (value: string): void => {
+    const ms = parseLocalInput(value)
+    if (ms === undefined || ms <= Date.now()) {
+      setError(t('detail.schedule.onceInvalid'))
       return
     }
     setError(undefined)
-    if (next && trimmed !== schedule?.cron) controller.setSchedule(task.id, { cron: trimmed })
+    controller.setSchedule(task.id, { at: ms })
+  }
+
+  /** Switch the editor (and the persisted rule) between recurring and one-shot. */
+  const switchMode = (next: 'recurring' | 'once'): void => {
+    setMode(next)
+    if (next === 'recurring') {
+      const trimmed = cron.trim()
+      if (trimmed === '' || !isValidCron(trimmed)) {
+        setError(t('detail.schedule.invalid'))
+        return
+      }
+      setError(undefined)
+      controller.setSchedule(task.id, { cron: trimmed })
+      return
+    }
+    const ms = parseLocalInput(onceTime)
+    if (ms === undefined || ms <= Date.now()) {
+      setError(t('detail.schedule.onceInvalid'))
+      return
+    }
+    setError(undefined)
+    controller.setSchedule(task.id, { at: ms })
+  }
+
+  /** Arm/disarm the schedule (arming first persists the current editor value). */
+  const toggleEnabled = (next: boolean): void => {
+    if (next) {
+      if (mode === 'recurring') {
+        const trimmed = cron.trim()
+        if (trimmed === '' || !isValidCron(trimmed)) {
+          setError(t('detail.schedule.invalid'))
+          return
+        }
+        if (trimmed !== schedule?.cron) controller.setSchedule(task.id, { cron: trimmed })
+      } else {
+        const ms = parseLocalInput(onceTime)
+        if (ms === undefined || ms <= Date.now()) {
+          setError(t('detail.schedule.onceInvalid'))
+          return
+        }
+        const currentTrigger = schedule?.recurring === false ? schedule.nextRunAt : undefined
+        if (ms !== currentTrigger) controller.setSchedule(task.id, { at: ms })
+      }
+    }
+    setError(undefined)
     if (controller.setSchedule(task.id, { enabled: next })) setEnabled(next)
   }
 
@@ -122,6 +191,7 @@ function ScheduleSection({ controller, task }: { controller: BoardController; ta
       ? t('detail.schedule.dueSoon')
       : new Date(nextRunAt).toLocaleString()
   const lastLabel = lastTriggeredAt === undefined ? '—' : new Date(lastTriggeredAt).toLocaleString()
+  const fired = mode === 'once' && enabled && nextRunAt === undefined && lastTriggeredAt !== undefined
 
   return (
     <section className={css.detailSection}>
@@ -135,33 +205,60 @@ function ScheduleSection({ controller, task }: { controller: BoardController; ta
         <span>{t('detail.schedule.enable')}</span>
       </label>
       <div className={css.scheduleRow}>
-        <input
-          className={`${css.input} ${css.scheduleInput}${error !== undefined ? ` ${css.scheduleInputInvalid}` : ''}`}
-          value={cron}
-          placeholder="0 9 * * *"
-          spellCheck={false}
-          aria-label={t('detail.schedule.cron')}
-          onChange={event => { setCron(event.target.value); setError(undefined) }}
-          onBlur={() => { saveCron(cron) }}
-          onKeyDown={event => { if (event.key === 'Enter') saveCron(cron) }}
-        />
         <select
           className={css.schedulePreset}
-          value=""
-          aria-label={t('detail.schedule.presets')}
-          onChange={event => { applyPreset(event.target.value) }}
+          value={mode}
+          aria-label={t('detail.schedule.mode')}
+          onChange={event => { switchMode(event.target.value as 'recurring' | 'once') }}
         >
-          <option value="">{t('detail.schedule.presets')}…</option>
-          {SCHEDULE_PRESETS.map(preset => (
-            <option key={preset.cron} value={preset.cron}>{t(preset.label)}</option>
-          ))}
+          <option value="recurring">{t('detail.schedule.mode.recurring')}</option>
+          <option value="once">{t('detail.schedule.mode.once')}</option>
         </select>
+        {mode === 'recurring' ? (
+          <>
+            <input
+              className={`${css.input} ${css.scheduleInput}${error !== undefined ? ` ${css.scheduleInputInvalid}` : ''}`}
+              value={cron}
+              placeholder="0 9 * * *"
+              spellCheck={false}
+              aria-label={t('detail.schedule.cron')}
+              onChange={event => { setCron(event.target.value); setError(undefined) }}
+              onBlur={() => { saveCron(cron) }}
+              onKeyDown={event => { if (event.key === 'Enter') saveCron(cron) }}
+            />
+            <select
+              className={css.schedulePreset}
+              value=""
+              aria-label={t('detail.schedule.presets')}
+              onChange={event => { applyPreset(event.target.value) }}
+            >
+              <option value="">{t('detail.schedule.presets')}…</option>
+              {SCHEDULE_PRESETS.map(preset => (
+                <option key={preset.cron} value={preset.cron}>{t(preset.label)}</option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <>
+            <input
+              className={`${css.input} ${css.scheduleInput}${error !== undefined ? ` ${css.scheduleInputInvalid}` : ''}`}
+              type="datetime-local"
+              value={onceTime}
+              aria-label={t('detail.schedule.onceAt')}
+              onChange={event => { setOnceTime(event.target.value); setError(undefined) }}
+              onBlur={() => { saveOnce(onceTime) }}
+              onKeyDown={event => { if (event.key === 'Enter') saveOnce(onceTime) }}
+            />
+            <p className={css.scheduleMeta}>{t('detail.schedule.onceHint')}</p>
+          </>
+        )}
       </div>
       {error !== undefined && <p className={css.formError}>{error}</p>}
       <p className={css.scheduleMeta}>
         {t('detail.schedule.nextRun')} {nextLabel}
         {' · '}{t('detail.schedule.lastTriggered')} {lastLabel}
       </p>
+      {fired && <p className={css.scheduleMeta}>{t('detail.schedule.onceFired')}</p>}
     </section>
   )
 }
@@ -169,12 +266,21 @@ function ScheduleSection({ controller, task }: { controller: BoardController; ta
 /** Task detail overlay. */
 export function TaskDetail({ controller, task }: { controller: BoardController; task: TaskRecord }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [workspace, setWorkspace] = useState(task.workspacePath ?? '')
   const running = task.status === 'running'
 
   // Keep the overlay in sync if the task record changes underneath.
   const [latest, setLatest] = useState(task)
   useEffect(() => { setLatest(task) }, [task])
+  useEffect(() => { setWorkspace(task.workspacePath ?? '') }, [task.workspacePath])
   const current = latest
+
+  /** Persist the workspace path (blank clears it back to the cron workspace). */
+  const saveWorkspace = (): void => {
+    const trimmed = workspace.trim()
+    if (trimmed === (current.workspacePath ?? '')) return
+    controller.updateTask(current.id, { workspacePath: trimmed })
+  }
 
   return (
     <div className={css.modalBackdrop} onMouseDown={event => { if (event.target === event.currentTarget) controller.closeTask() }}>
@@ -204,6 +310,21 @@ export function TaskDetail({ controller, task }: { controller: BoardController; 
           </section>
 
           <ScheduleSection controller={controller} task={current} />
+
+          <section className={css.detailSection}>
+            <h4>{t('detail.workspace')}</h4>
+            <input
+              className={css.input}
+              value={workspace}
+              placeholder={t('detail.workspacePlaceholder')}
+              spellCheck={false}
+              aria-label={t('detail.workspace')}
+              onChange={event => { setWorkspace(event.target.value) }}
+              onBlur={saveWorkspace}
+              onKeyDown={event => { if (event.key === 'Enter') saveWorkspace() }}
+            />
+            <p className={css.scheduleMeta}>{t('detail.workspaceHint')}</p>
+          </section>
 
           <section className={css.detailSection}>
             <h4>{t('detail.execution')}</h4>

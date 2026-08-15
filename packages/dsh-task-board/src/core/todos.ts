@@ -3,9 +3,9 @@
  * Framework-free (no cordis, no runtime imports) so the state machine is
  * unit-testable in isolation.
  *
- * Todos are the lightweight counterpart of board tasks: agent-facing
- * `todo_add` / `todo_list` / `todo_done` / `todo_delete` operate on this
- * ledger, and the board UI can surface the same rows in a future column.
+ * Todos are the lightweight counterpart of board tasks: the agent-facing
+ * `todo` tool (action=add/list/done/delete) operates on this ledger, and the
+ * board UI surfaces the same rows in the todo strip.
  */
 
 /** Todo lifecycle status. */

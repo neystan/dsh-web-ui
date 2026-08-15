@@ -47,7 +47,7 @@ function TaskCardInner({ task, onClick }: { task: TaskRecord; onClick: () => voi
               ? `${t('card.scheduled')} · ${new Date(task.schedule.nextRunAt).toLocaleString()}`
               : t('card.scheduled')}
           >
-            {t('card.scheduled')}
+            ⏱ {task.schedule.recurring ? task.schedule.cron : t('card.oneShot')}
           </span>
         )}
         {latest !== undefined && (

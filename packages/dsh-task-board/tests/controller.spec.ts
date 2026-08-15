@@ -298,6 +298,41 @@ describe('run loop', () => {
     expect(controller.getSnapshot().tasks[0].status).toBe('done')
   })
 })
+describe('todos', () => {
+  it('addTodo/toggleTodo/deleteTodo round-trip through the snapshot and store', () => {
+    const { controller, store } = makeController()
+    const todo = controller.addTodo({ title: '上厕所', description: '' })!
+    expect(todo.status).toBe('open')
+    expect(controller.getSnapshot().todos).toHaveLength(1)
+    expect(store.todos()).toHaveLength(1)
+    controller.toggleTodo(todo.id)
+    expect(controller.getSnapshot().todos[0].status).toBe('done')
+    expect(store.todos()[0].status).toBe('done')
+    controller.toggleTodo(todo.id)
+    expect(controller.getSnapshot().todos[0].status).toBe('open')
+    controller.deleteTodo(todo.id)
+    expect(controller.getSnapshot().todos).toHaveLength(0)
+    expect(store.todos()).toHaveLength(0)
+  })
+
+  it('rejects a blank todo title', () => {
+    const { controller } = makeController()
+    expect(controller.addTodo({ title: '   ', description: '' })).toBeUndefined()
+    expect(controller.getSnapshot().todos).toHaveLength(0)
+  })
+
+  it('loads persisted todos on start', () => {
+    const { controller, store } = makeController()
+    store.saveTodos([{ id: 'd-1', title: '已存在', description: '', status: 'open', createdAt: NOW, updatedAt: NOW }])
+    const reloaded = new BoardController({
+      store, exec: new StubRunner(store),
+      sessions: new FakeSessions(), now: () => NOW, uuid,
+    })
+    reloaded.start()
+    expect(reloaded.getSnapshot().todos.map(t => t.id)).toEqual(['d-1'])
+  })
+})
+
 describe('scheduling', () => {
   it('setSchedule enables a rule and computes the next run instant', () => {
     const { controller, store } = makeController()
@@ -307,6 +342,22 @@ describe('scheduling', () => {
     expect(persisted.schedule?.enabled).toBe(true)
     expect(persisted.schedule?.cron).toBe('* * * * *')
     expect(persisted.schedule?.nextRunAt).toBeDefined()
+  })
+
+  it('setSchedule arms a one-shot rule via `at` and keeps the trigger across toggle', () => {
+    const { controller, store } = makeController()
+    const task = controller.createTask({ title: 'x', description: '', prompt: '' })!
+    expect(controller.setSchedule(task.id, { enabled: true, at: NOW + 60_000 })).toBe(true)
+    const persisted = store.load()[0]
+    expect(persisted.schedule?.recurring).toBe(false)
+    expect(persisted.schedule?.cron).toBe('')
+    expect(persisted.schedule?.nextRunAt).toBe(NOW + 60_000)
+    // Pause keeps the trigger; re-arm restores it.
+    controller.setSchedule(task.id, { enabled: false })
+    expect(store.load()[0].schedule?.nextRunAt).toBe(NOW + 60_000)
+    expect(controller.setSchedule(task.id, { enabled: true })).toBe(true)
+    expect(store.load()[0].schedule?.enabled).toBe(true)
+    expect(store.load()[0].schedule?.nextRunAt).toBe(NOW + 60_000)
   })
 
   it('rejects blank or invalid cron expressions without touching state', () => {
@@ -338,23 +389,6 @@ describe('scheduling', () => {
     const second = store.load()[0].schedule?.nextRunAt
     expect(second).toBeDefined()
     expect(second).not.toBe(first)
-  })
-
-  it('applyScheduleNextRun rolls the schedule forward for the scheduler', () => {
-    const { controller, store } = makeController()
-    const task = controller.createTask({ title: 'x', description: '', prompt: '' })!
-    controller.setSchedule(task.id, { enabled: true, cron: '* * * * *' })
-    controller.applyScheduleNextRun(task.id, 1_234_567_890, 1_234_500_000)
-    const persisted = store.load()[0]
-    expect(persisted.schedule?.nextRunAt).toBe(1_234_567_890)
-    expect(persisted.schedule?.lastTriggeredAt).toBe(1_234_500_000)
-  })
-
-  it('applyScheduleNextRun is a no-op for tasks without a schedule rule', () => {
-    const { controller } = makeController()
-    const task = controller.createTask({ title: 'x', description: '', prompt: '' })!
-    expect(() => controller.applyScheduleNextRun(task.id, 1, 2)).not.toThrow()
-    expect(controller.getSnapshot().tasks[0].schedule).toBeUndefined()
   })
 })
 

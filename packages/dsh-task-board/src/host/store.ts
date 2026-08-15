@@ -16,7 +16,7 @@ import { isTaskStatus } from '../core/tasks.ts'
 import { isValidCron } from '../core/schedule.ts'
 
 /** File format version. */
-const FORMAT_VERSION = 1
+const FORMAT_VERSION = 2
 
 /** Store file location: <home>/.dsh/task-board.json. */
 export function storePath(): string {
@@ -35,18 +35,53 @@ function normalizeStatus(status: unknown): TaskRecord['status'] {
   return isTaskStatus(status) ? status : 'todo'
 }
 
-/** Repair a persisted schedule rule (same policy as the browser store). */
+/**
+ * Repair a persisted schedule rule into the v2 shape (one discriminated rule
+ * with a `recurring` flag). Both v1 row shapes migrate here: a cron-bearing
+ * rule becomes recurring, a `onceAt` instant becomes a one-shot. A v2
+ * one-shot that already fired (nextRunAt consumed) is kept — the rule must
+ * survive until the run settles and the task is removed.
+ */
 function normalizeSchedule(schedule: unknown): ScheduleRule | undefined {
   if (typeof schedule !== 'object' || schedule === null) return undefined
   const rule = schedule as Record<string, unknown>
-  if (typeof rule.cron !== 'string') return undefined
-  if (rule.cron.trim() === '' || !isValidCron(rule.cron)) return undefined
-  return {
-    enabled: rule.enabled === true,
-    cron: rule.cron,
-    nextRunAt: typeof rule.nextRunAt === 'number' ? rule.nextRunAt : undefined,
-    lastTriggeredAt: typeof rule.lastTriggeredAt === 'number' ? rule.lastTriggeredAt : undefined,
+  const cron = typeof rule.cron === 'string' ? rule.cron.trim() : ''
+  const onceAt = typeof rule.onceAt === 'number' ? rule.onceAt : undefined
+  const nextRunAt = typeof rule.nextRunAt === 'number' ? rule.nextRunAt : undefined
+  const lastTriggeredAt = typeof rule.lastTriggeredAt === 'number' ? rule.lastTriggeredAt : undefined
+  if (cron !== '') {
+    // A malformed cron rule would otherwise linger as a never-firing
+    // schedule instead of being dropped for later repair.
+    if (!isValidCron(cron)) return undefined
+    return {
+      enabled: rule.enabled === true,
+      recurring: true,
+      cron,
+      nextRunAt,
+      lastTriggeredAt,
+    }
   }
+  if (onceAt !== undefined) {
+    // v1 one-shot row (onceAt instant; nextRunAt may be absent or stale).
+    return {
+      enabled: rule.enabled === true,
+      recurring: false,
+      cron: '',
+      nextRunAt: nextRunAt ?? onceAt,
+      lastTriggeredAt,
+    }
+  }
+  if (rule.recurring === false) {
+    // v2 one-shot row — including the fired state (nextRunAt consumed).
+    return {
+      enabled: rule.enabled === true,
+      recurring: false,
+      cron: '',
+      nextRunAt,
+      lastTriggeredAt,
+    }
+  }
+  return undefined
 }
 
 /** Structural row check; invalid rows are dropped on load. */
@@ -201,6 +236,13 @@ export class TaskBoardStore {
   replaceTasks(tasks: readonly TaskRecord[]): void {
     const doc = this.load()
     doc.tasks = tasks.map(parseTaskRow).filter((row): row is TaskRecord => row !== undefined)
+    this.save(doc)
+  }
+
+  /** Replace the whole todo ledger (board sync). */
+  replaceTodos(todos: readonly TodoRecord[]): void {
+    const doc = this.load()
+    doc.todos = todos.filter(isTodoRecord)
     this.save(doc)
   }
 }

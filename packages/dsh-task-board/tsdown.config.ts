@@ -12,7 +12,7 @@
  */
 import { clientBundle } from '../../shared/tsdown.client.ts'
 
-export default clientBundle('@linxin666/dsh-client-ui-task-board', ['src/index.ts', 'src/invariant.ts'], {
+export default clientBundle('@linxin666/dsh-client-ui-task-board', ['src/index.ts'], {
   libExternal: [
     '@deepseek-ai/dsh-client-connection',
     '@deepseek-ai/dsh-client-locale',

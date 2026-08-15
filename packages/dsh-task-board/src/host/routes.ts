@@ -10,10 +10,10 @@ import { randomUUID } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
 import { createTodo, withTodoStatus, type NewTodoInput, type TodoRecord } from '../core/todos.ts'
-import { createTask, withStatus, type NewTaskInput, type TaskRecord, type TaskStatus } from '../core/tasks.ts'
+import { withStatus, type TaskRecord, type TaskStatus } from '../core/tasks.ts'
 import { applySetSchedule, type SetSchedulePatch } from '../core/use-cases/task-schedule.ts'
 import { applyUpdateTask } from '../core/use-cases/task-update.ts'
-import { finishExecution, openExecution } from './execution-service.ts'
+import { applyManualRunPolicy, finishExecution, openExecution } from './execution-service.ts'
 import type { TaskRunner } from './runner.ts'
 import type { TaskBoardStore } from './store.ts'
 
@@ -73,12 +73,6 @@ function strField(payload: Record<string, unknown>, key: string): string | undef
   return typeof value === 'string' ? value : undefined
 }
 
-/** Number field helper. */
-function numField(payload: Record<string, unknown>, key: string): number | undefined {
-  const value = payload[key]
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
 /** The routes' dependencies. */
 export interface TaskBoardRoutesDeps {
   store: TaskBoardStore
@@ -134,40 +128,27 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
           writeJson(res, 200, { tasks: store.tasks() })
           return
         }
-        if (method === 'POST') {
+        if (method === 'PUT') {
+          // Single-task upsert (the board's targeted mutation path): replace
+          // or append exactly one task, never a whole-ledger write. The
+          // host's execution records are always kept: board snapshots never
+          // own executions, so a stale row must not erase them.
           const body = await post(req, res)
           if (body === undefined) return
-          const title = strField(body, 'title') ?? ''
-          if (title.trim() === '') {
-            writeJson(res, 400, { error: 'title is required' })
+          const task = body.task as Record<string, unknown> | undefined
+          if (typeof task !== 'object' || task === null
+            || typeof task.id !== 'string' || task.id === ''
+            || typeof task.title !== 'string'
+            || typeof task.prompt !== 'string') {
+            writeJson(res, 400, { error: 'task object with id/title/prompt is required' })
             return
           }
-          const input: NewTaskInput = {
-            title,
-            description: strField(body, 'description') ?? '',
-            prompt: strField(body, 'prompt') ?? '',
+          const existing = store.tasks().find(candidate => candidate.id === task.id)
+          if (existing !== undefined && !Array.isArray(task.executions)) {
+            task.executions = existing.executions
           }
-          const task = createTask(input, now(), randomUUID())
-          const workspacePath = strField(body, 'workspacePath')
-          if (workspacePath !== undefined && workspacePath.trim() !== '') task.workspacePath = workspacePath.trim()
-          // Optional schedule on creation (agent cron_create path).
-          const schedule = body.schedule as Record<string, unknown> | undefined
-          if (schedule !== undefined) {
-            const applied = applySetSchedule([task], task.id, {
-              enabled: schedule.enabled === true,
-              cron: typeof schedule.cron === 'string' ? schedule.cron : '',
-            }, now())
-            if (applied.applied) {
-              const next = applied.tasks[0]
-              store.putTask(next)
-              writeJson(res, 201, { task: next })
-              return
-            }
-            writeJson(res, 400, { error: 'invalid schedule' })
-            return
-          }
-          store.putTask(task)
-          writeJson(res, 201, { task })
+          store.putTask(task as unknown as TaskRecord)
+          writeJson(res, 200, { task: store.tasks().find(candidate => candidate.id === task.id) })
           return
         }
         if (method === 'PATCH') {
@@ -208,12 +189,16 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
                 ? { ...next, workspacePath: undefined }
                 : { ...next, workspacePath: patch.workspacePath.trim() }
             }
-            const schedulePatch = patch.schedule as SetSchedulePatch | undefined
+            const schedulePatch = patch.schedule as Record<string, unknown> | undefined
             if (schedulePatch !== undefined) {
-              const { tasks, applied } = applySetSchedule([next], id, {
-                enabled: schedulePatch.enabled,
-                cron: typeof schedulePatch.cron === 'string' ? schedulePatch.cron : undefined,
-              }, now())
+              const sp: SetSchedulePatch = {}
+              if (typeof schedulePatch.enabled === 'boolean') sp.enabled = schedulePatch.enabled
+              if (typeof schedulePatch.cron === 'string') sp.cron = schedulePatch.cron
+              const at = typeof schedulePatch.nextRunAt === 'number' ? schedulePatch.nextRunAt
+                : typeof schedulePatch.onceAt === 'number' ? schedulePatch.onceAt
+                  : undefined
+              if (at !== undefined) sp.at = at
+              const { tasks, applied } = applySetSchedule([next], id, sp, now())
               if (!applied) {
                 writeJson(res, 400, { error: 'invalid schedule' })
                 return
@@ -264,9 +249,15 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
         }
         // Fire-and-forget: the board polls the ledger for the settled state.
         void finishExecution(store, runner, opened, parentSessionId)
+          .then(() => {
+            // Manual-run policy: one-shot tasks are deleted when settled,
+            // recurring tasks roll their schedule forward from now.
+            void applyManualRunPolicy(store, id)
+          })
           .catch((error: unknown) => {
             // The execution record already exists; settle it as cancelled on
-            // an unexpected orchestration failure.
+            // an unexpected orchestration failure, then apply the settle
+            // policy (one-shot tasks are removed even on a failed attempt).
             const execution = opened.executions[opened.executions.length - 1]
             const settled = {
               ...opened,
@@ -277,6 +268,7 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
                 : entry),
             }
             store.putTask(settled)
+            void applyManualRunPolicy(store, id)
           })
         writeJson(res, 202, { ok: true })
       },
@@ -293,6 +285,21 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
         }
         if (method === 'GET') {
           writeJson(res, 200, { todos: store.todos() })
+          return
+        }
+        if (method === 'PUT') {
+          // Single-todo upsert (the board's targeted mutation path).
+          const body = await post(req, res)
+          if (body === undefined) return
+          const todo = body.todo as Record<string, unknown> | undefined
+          if (typeof todo !== 'object' || todo === null
+            || typeof todo.id !== 'string' || todo.id === ''
+            || typeof todo.title !== 'string') {
+            writeJson(res, 400, { error: 'todo object with id/title is required' })
+            return
+          }
+          store.putTodo(todo as unknown as TodoRecord)
+          writeJson(res, 200, { todo: store.todos().find(candidate => candidate.id === todo.id) })
           return
         }
         if (method === 'POST') {
@@ -366,6 +373,23 @@ export function makeRoutes(deps: TaskBoardRoutesDeps): WebRoute[] {
         }
         store.replaceTasks(tasks as TaskRecord[])
         writeJson(res, 200, { tasks: store.tasks() })
+      },
+    },
+    // ------------------------------------------------------------ todos batch
+    {
+      kind: 'exact',
+      path: '/api/task-board/todos/batch',
+      handler: async (req, res) => {
+        if (!guard(req, res, 'POST')) return
+        const body = await post(req, res)
+        if (body === undefined) return
+        const todos = body.todos
+        if (!Array.isArray(todos)) {
+          writeJson(res, 400, { error: 'todos array is required' })
+          return
+        }
+        store.replaceTodos(todos as TodoRecord[])
+        writeJson(res, 200, { todos: store.todos() })
       },
     },
   ]

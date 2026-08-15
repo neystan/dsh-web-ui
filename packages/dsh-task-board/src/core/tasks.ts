@@ -29,16 +29,35 @@ export interface ExecutionRecord {
 }
 
 /**
- * A scheduled-run rule attached to a task. The browser-side scheduler ticks
- * every minute and triggers the task when `nextRunAt` is due; the rule is
- * persisted with the task (localStorage), so scheduling survives refreshes.
+ * A scheduled-run rule attached to a task. One discriminated rule serves
+ * both modes (`recurring`): a recurring cron rule, or a one-shot trigger
+ * instant — the mature scheduler pattern (Linux `at` / the reference
+ * CronManager) where one record carries a `recurring` flag instead of two
+ * mutually-exclusive fields.
+ *
+ * Lifecycle: the rule is created armed with a `nextRunAt`; the scheduler
+ * fires the task when due. A recurring rule is rolled forward from its due
+ * instant at dispatch (a tick can never double-fire, and missed fires are
+ * skipped — standard cron semantics). A one-shot rule keeps its instant
+ * until an execution actually starts (the run tool consumes it — a failed
+ * dispatch never orphans the task), then survives in the fired state until
+ * the run settles, at which point the task is removed (its one purpose has
+ * been served). The rule is persisted with the task (host store), so
+ * scheduling survives host restarts.
  */
 export interface ScheduleRule {
   /** Whether the schedule is armed. */
   enabled: boolean
-  /** 5-field cron expression: `分 时 日 月 周`. */
+  /** true = recurring cron rule; false = one-shot trigger instant. */
+  recurring: boolean
+  /** 5-field cron expression: `分 时 日 月 周` ('' on one-shot rules). */
   cron: string
-  /** Next due instant (ms epoch); maintained by the scheduler/controller. */
+  /**
+   * Next due instant (ms epoch). Recurring rules carry the next match while
+   * armed; one-shot rules carry the trigger instant until an execution
+   * starts (then consumed to undefined — the rule itself survives until the
+   * run settles and the task is removed).
+   */
   nextRunAt: number | undefined
   /** Instant of the latest scheduled trigger (ms epoch). */
   lastTriggeredAt: number | undefined
@@ -143,11 +162,13 @@ export function withSchedule(
   const current = task.schedule
   const schedule: ScheduleRule = {
     enabled: current?.enabled ?? false,
+    recurring: current?.recurring ?? false,
     cron: current?.cron ?? '',
     nextRunAt: current?.nextRunAt,
     lastTriggeredAt: current?.lastTriggeredAt,
   }
   if ('enabled' in patch) schedule.enabled = patch.enabled ?? false
+  if ('recurring' in patch) schedule.recurring = patch.recurring ?? false
   if ('cron' in patch) schedule.cron = patch.cron ?? ''
   if ('nextRunAt' in patch) schedule.nextRunAt = patch.nextRunAt
   if ('lastTriggeredAt' in patch) schedule.lastTriggeredAt = patch.lastTriggeredAt

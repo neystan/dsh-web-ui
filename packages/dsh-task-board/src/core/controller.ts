@@ -18,9 +18,10 @@ import {
   withStatus,
   type NewTaskInput, type TaskRecord, type TaskStatus,
 } from './tasks.ts'
+import { createTodo, withTodoStatus, type NewTodoInput, type TodoRecord } from './todos.ts'
 import { applyCreateTask } from './use-cases/task-create.ts'
 import { applyDeleteTask } from './use-cases/task-delete.ts'
-import { applyScheduleNextRun as applyScheduleRollForward, applySetSchedule } from './use-cases/task-schedule.ts'
+import { applySetSchedule } from './use-cases/task-schedule.ts'
 import { applyUpdateTask } from './use-cases/task-update.ts'
 
 /** The sessions face the controller needs for navigation awareness. */
@@ -51,15 +52,14 @@ export interface ControllerDeps {
   now?: () => number
   /** Id minting; defaults to a random-uuid. */
   uuid?: () => string
-  /** Poll cadence (ms) while a run settles; defaults to 2000. */
+  /** Poll cadence (ms) while the board is open; defaults to 2000. */
   pollMs?: number
-  /** Give-up bound for one run's settlement poll; defaults to 30 minutes. */
-  pollTimeoutMs?: number
 }
 
 /** Immutable controller snapshot for UI subscriptions. */
 export interface ControllerSnapshot {
   tasks: readonly TaskRecord[]
+  todos: readonly TodoRecord[]
   boardOpen: boolean
   selectedTaskId: string | undefined
 }
@@ -93,6 +93,7 @@ function currentOf(sessions: SessionsControllerFace): string | undefined {
  */
 export class BoardController {
   private tasks: TaskRecord[] = []
+  private todos: TodoRecord[] = []
   private boardOpen = false
   private selectedTaskId: string | undefined
   private listeners = new Set<() => void>()
@@ -105,7 +106,6 @@ export class BoardController {
     this.now = deps.now ?? (() => Date.now())
     this.uuid = deps.uuid ?? randomUuid
     this.pollMs = deps.pollMs ?? 2_000
-    this.pollTimeoutMs = deps.pollTimeoutMs ?? 30 * 60_000
   }
 
   // --- lifecycle -------------------------------------------------------------
@@ -113,11 +113,13 @@ export class BoardController {
   /** Load the persisted ledger and start the navigation subscription. */
   start(): void {
     this.tasks = this.deps.store.load()
+    this.todos = this.deps.store.todos?.() ?? []
     // Leftover 'running' tasks (a run in flight when the page loaded) settle
     // through the host ledger; watch them until they settle.
     if (this.tasks.some(task => task.status === 'running')) this.startPolling()
     const unsubscribeExternal = this.deps.store.subscribeExternal?.(() => {
       this.tasks = this.deps.store.load()
+      this.todos = this.deps.store.todos?.() ?? []
       this.notify()
     })
     if (unsubscribeExternal !== undefined) this.disposers.push(unsubscribeExternal)
@@ -139,6 +141,7 @@ export class BoardController {
   getSnapshot(): ControllerSnapshot {
     return {
       tasks: this.tasks,
+      todos: this.todos,
       boardOpen: this.boardOpen,
       selectedTaskId: this.selectedTaskId,
     }
@@ -147,6 +150,60 @@ export class BoardController {
   subscribe(fn: () => void): () => void {
     this.listeners.add(fn)
     return () => { this.listeners.delete(fn) }
+  }
+
+  // --- todo mutations ----------------------------------------------------------
+
+  /** Add a durable todo (persisted through the store). */
+  addTodo(input: NewTodoInput): TodoRecord | undefined {
+    if (input.title.trim() === '') return undefined
+    const todo = createTodo(input, this.now(), this.uuid())
+    this.todos = [...this.todos, todo]
+    if (this.deps.store.putTodo !== undefined) {
+      this.deps.store.putTodo(todo)
+      this.notify()
+      return todo
+    }
+    this.persistTodosAndNotify()
+    return todo
+  }
+
+  /** Toggle a todo between open and done. */
+  toggleTodo(id: string): void {
+    const todo = this.todos.find(candidate => candidate.id === id)
+    if (todo === undefined) return
+    const changed = withTodoStatus(todo, todo.status === 'done' ? 'open' : 'done', this.now())
+    this.todos = this.todos.map(candidate => candidate.id === id ? changed : candidate)
+    if (this.deps.store.putTodo !== undefined) {
+      this.deps.store.putTodo(changed)
+      this.notify()
+      return
+    }
+    this.persistTodosAndNotify()
+  }
+
+  /** Delete a todo. */
+  deleteTodo(id: string): void {
+    this.todos = this.todos.filter(todo => todo.id !== id)
+    if (this.deps.store.deleteTodo !== undefined) {
+      this.deps.store.deleteTodo(id)
+      this.notify()
+      return
+    }
+    this.persistTodosAndNotify()
+  }
+
+  /** Reload the todo ledger from the store (async when supported). */
+  refreshTodos(): void {
+    if (this.deps.store.refreshTodos !== undefined) {
+      void this.deps.store.refreshTodos().then(todos => {
+        this.todos = todos
+        this.notify()
+      }).catch(() => { /* transient read failure */ })
+    } else {
+      this.todos = this.deps.store.todos?.() ?? []
+      this.notify()
+    }
   }
 
   // --- view state -------------------------------------------------------------
@@ -158,12 +215,17 @@ export class BoardController {
     // updates of the already-selected session.
     this.lastCurrent = currentOf(this.deps.sessions)
     this.boardOpen = true
+    // Fresh data on open, then keep polling while the board is visible so
+    // agent-created tasks/todos appear without a page reload.
+    this.refreshAll()
+    this.startPolling()
     this.notify()
   }
 
   closeBoard(): void {
     if (!this.boardOpen) return
     this.boardOpen = false
+    this.stopPolling()
     this.notify()
   }
 
@@ -191,17 +253,52 @@ export class BoardController {
     const { task, tasks } = applyCreateTask(this.tasks, input, this.now(), this.uuid())
     if (task === undefined) return undefined
     this.tasks = [...tasks]
+    // Targeted upsert when the store supports it: a full-ledger save from a
+    // stale snapshot could overwrite newer host state written by other
+    // writers (the host runner, the scheduler, agent tools, sibling tabs).
+    if (this.deps.store.putTask !== undefined) {
+      this.deps.store.putTask(task)
+      this.notify()
+      return task
+    }
     this.persistAndNotify()
     return task
   }
 
-  updateTask(id: string, patch: Partial<Pick<TaskRecord, 'title' | 'description' | 'prompt'>>): void {
-    this.tasks = [...applyUpdateTask(this.tasks, id, patch, this.now())]
+  updateTask(id: string, patch: Partial<Pick<TaskRecord, 'title' | 'description' | 'prompt' | 'workspacePath'>>): void {
+    const updated = applyUpdateTask(this.tasks, id, patch, this.now())
+    this.tasks = [...updated]
+    // Field-level targeted update: an edit must never carry (and overwrite)
+    // host-owned state such as execution records or the running status.
+    if (this.deps.store.updateTask !== undefined) {
+      this.deps.store.updateTask(id, patch, this.now())
+      this.notify()
+      return
+    }
+    if (this.deps.store.putTask !== undefined) {
+      const changed = updated.find(task => task.id === id)
+      if (changed !== undefined) {
+        this.deps.store.putTask(changed)
+        this.notify()
+        return
+      }
+    }
     this.persistAndNotify()
   }
 
   moveTask(id: string, status: TaskStatus): void {
     this.tasks = this.tasks.map(task => task.id === id ? withStatus(task, status, this.now()) : task)
+    if (this.deps.store.updateTask !== undefined) {
+      this.deps.store.updateTask(id, { status }, this.now())
+      this.notify()
+      return
+    }
+    const changed = this.tasks.find(task => task.id === id)
+    if (changed !== undefined && this.deps.store.putTask !== undefined) {
+      this.deps.store.putTask(changed)
+      this.notify()
+      return
+    }
     this.persistAndNotify()
   }
 
@@ -209,37 +306,48 @@ export class BoardController {
     const { tasks, selectionCleared } = applyDeleteTask(this.tasks, this.selectedTaskId, id)
     this.tasks = [...tasks]
     if (selectionCleared) this.selectedTaskId = undefined
+    // Targeted delete when the store supports it: a full-ledger save from a
+    // stale snapshot could otherwise erase tasks created by other writers
+    // (agent tools, the host scheduler, sibling tabs).
+    if (this.deps.store.deleteTask !== undefined) {
+      this.deps.store.deleteTask(id)
+      this.notify()
+      return
+    }
     this.persistAndNotify()
   }
 
   // --- scheduling ---------------------------------------------------------------
 
   /**
-   * Update a task's schedule rule. A blank or invalid cron expression is
-   * rejected (returns false, state untouched). When the rule ends up enabled
-   * the next run instant is computed immediately; a disabled rule carries no
-   * next-run instant. Delegates the domain transition to the schedule use case.
+   * Update a task's schedule rule. A blank or invalid cron expression or a
+   * missing one-shot trigger is rejected (returns false, state untouched).
+   * When the rule ends up enabled the next run instant is computed
+   * immediately (recurring) or restored from the trigger (one-shot); a
+   * disabled rule carries no next-run instant — except a paused one-shot
+   * keeps its trigger for later resume. Delegates the domain transition to
+   * the schedule use case.
    * @param id - the task to schedule.
    * @param patch - fields to change (absent fields keep their current value).
-   * @returns true when applied, false when rejected (invalid cron / unknown task).
+   * @returns true when applied, false when rejected (invalid cron / missing trigger / unknown task).
    */
-  setSchedule(id: string, patch: { enabled?: boolean; cron?: string }): boolean {
+  setSchedule(id: string, patch: { enabled?: boolean; cron?: string; at?: number }): boolean {
     const { tasks, applied } = applySetSchedule(this.tasks, id, patch, this.now())
     if (!applied) return false
     this.tasks = [...tasks]
+    if (this.deps.store.updateTask !== undefined) {
+      this.deps.store.updateTask(id, { schedule: patch }, this.now())
+      this.notify()
+      return true
+    }
+    const changed = tasks.find(task => task.id === id)
+    if (changed !== undefined && this.deps.store.putTask !== undefined) {
+      this.deps.store.putTask(changed)
+      this.notify()
+      return true
+    }
     this.persistAndNotify()
     return true
-  }
-
-  /**
-   * Roll a task's schedule forward (scheduler callback): persist the next due
-   * instant and the trigger instant of this run. No-op when the task has no
-   * schedule rule (it was deleted mid-tick, for example).
-   */
-  applyScheduleNextRun(id: string, nextRunAt: number | undefined, lastTriggeredAt: number | undefined): void {
-    const next = applyScheduleRollForward(this.tasks, id, nextRunAt, lastTriggeredAt, this.now())
-    this.tasks = [...next]
-    this.persistAndNotify()
   }
 
   /**
@@ -264,21 +372,29 @@ export class BoardController {
     const parentSessionId = this.deps.sessions.list.getSnapshot().current
     const accepted = await this.deps.exec.run(id, parentSessionId)
     if (!accepted) return false
-    // The host opened the execution and moved the task to 'running'; reload
-    // the ledger and watch it settle.
-    this.tasks = this.deps.store.load()
+    // The host opened the execution and moved the task to 'running'; re-read
+    // the FRESH host ledger (refresh when available — the sync load() face of
+    // a host-backed store is only an in-memory mirror) and watch it settle.
+    this.tasks = this.deps.store.refresh !== undefined
+      ? await this.deps.store.refresh()
+      : this.deps.store.load()
     this.notify()
     this.startPolling()
     return true
   }
 
-  /** Re-run a settled task: move it back to 'todo' first, then execute. */
+  /**
+   * Re-run a settled task: move it back to 'todo' in the UI, then execute.
+   * The status flip is NOT persisted here — the host run path owns the
+   * running/done transitions, and a full-ledger save from this snapshot
+   * could race (and overwrite) the execution the host is about to write.
+   */
   async rerunTask(id: string): Promise<void> {
     const task = this.tasks.find(candidate => candidate.id === id)
     if (task === undefined) return
     if (task.status !== 'running') {
       this.tasks = this.tasks.map(candidate => candidate.id === id ? withStatus(candidate, 'todo', this.now()) : candidate)
-      this.persistAndNotify()
+      this.notify()
     }
     await this.runTask(id)
   }
@@ -295,20 +411,17 @@ export class BoardController {
 
   private lastCurrent: string | undefined = undefined
 
-  /** Poll timer while any task is running. */
+  /** Poll timer while the board is open. */
   private pollTimer: ReturnType<typeof setInterval> | undefined = undefined
   private readonly pollMs: number
-  private readonly pollTimeoutMs: number
-  private pollDeadline = 0
 
-  /** Start polling the host ledger until every running task settles. */
+  /** Start polling the host ledger while the board is open (idempotent). */
   private startPolling(): void {
     if (this.pollTimer !== undefined) return
-    this.pollDeadline = Date.now() + this.pollTimeoutMs
     this.pollTimer = setInterval(() => { this.pollTick() }, this.pollMs)
   }
 
-  /** Stop the settlement poll (idempotent). */
+  /** Stop the poll (idempotent). */
   private stopPolling(): void {
     if (this.pollTimer !== undefined) {
       clearInterval(this.pollTimer)
@@ -316,25 +429,32 @@ export class BoardController {
     }
   }
 
-  /** One poll pass: reload the ledger (async when the store supports it); stop once nothing is running (or on timeout). */
+  /** One poll pass: reload tasks + todos from the host (agent changes appear live). */
   private pollTick(): void {
-    const apply = (tasks: TaskRecord[]): void => {
-      this.tasks = tasks
-      this.notify()
-      const anyRunning = tasks.some(task => task.status === 'running')
-      if (!anyRunning || Date.now() > this.pollDeadline) this.stopPolling()
-    }
+    this.refreshAll()
+  }
+
+  /** Reload the task and todo ledgers (async when the store supports it). */
+  private refreshAll(): void {
     if (this.deps.store.refresh !== undefined) {
-      void this.deps.store.refresh().then(apply).catch(() => {
-        // Transient host read failure: keep polling.
-      })
+      void this.deps.store.refresh().then(tasks => {
+        this.tasks = tasks
+        this.notify()
+      }).catch(() => { /* transient host read failure */ })
     } else {
-      apply(this.deps.store.load())
+      this.tasks = this.deps.store.load()
+      this.notify()
     }
+    this.refreshTodos()
   }
 
   private persistAndNotify(): void {
     this.deps.store.save(this.tasks)
+    this.notify()
+  }
+
+  private persistTodosAndNotify(): void {
+    this.deps.store.saveTodos?.(this.todos)
     this.notify()
   }
 

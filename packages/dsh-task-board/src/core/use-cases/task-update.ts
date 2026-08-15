@@ -6,7 +6,7 @@
 import type { TaskRecord } from '../tasks.ts'
 
 /** Editable fields on a task (the update patch surface). */
-export type TaskUpdatePatch = Partial<Pick<TaskRecord, 'title' | 'description' | 'prompt'>>
+export type TaskUpdatePatch = Partial<Pick<TaskRecord, 'title' | 'description' | 'prompt' | 'workspacePath'>>
 
 /**
  * Apply an update across the ledger. Tasks that do not match the id are left

@@ -14,8 +14,21 @@
  * localStorage backend.
  */
 import { isValidCron } from './schedule.ts'
+import { applySetSchedule } from './use-cases/task-schedule.ts'
+import type { TodoRecord } from './todos.ts'
 import type { ScheduleRule, TaskRecord, TaskStatus } from './tasks.ts'
 import { isTaskStatus } from './tasks.ts'
+
+/** Field-level task update (targeted PATCH). Never carries executions: the
+ * host owns execution records, and a board edit must not overwrite them. */
+export interface TaskUpdatePatch {
+  title?: string
+  description?: string
+  prompt?: string
+  workspacePath?: string
+  status?: TaskStatus
+  schedule?: { enabled?: boolean; cron?: string; at?: number }
+}
 
 /** Persistence seam for the task ledger. */
 export interface TaskStore {
@@ -28,6 +41,30 @@ export interface TaskStore {
   refresh?(): Promise<TaskRecord[]>
   /** Persist the whole ledger (replaces the stored document). */
   save(tasks: readonly TaskRecord[]): void
+  /**
+   * Optional single-task upsert (creation path). Host-backed stores
+   * implement this so every board mutation is a targeted write: a full-ledger
+   * save built from a stale snapshot can overwrite newer host state (a
+   * running/settled execution) written by other writers (the host runner,
+   * the scheduler, agent tools, sibling tabs).
+   */
+  putTask?(task: TaskRecord): void
+  /**
+   * Optional field-level update (edit path). Host-backed stores implement
+   * this so an edit only touches the edited fields: a whole-row write from
+   * a stale snapshot would overwrite the host's execution records and
+   * running/done status.
+   * @param now - optional clock instant (ms epoch) for schedule recompute;
+   *   backends that own their clock (the host) ignore it.
+   */
+  updateTask?(id: string, patch: TaskUpdatePatch, now?: number): void
+  /**
+   * Optional single-task delete. Host-backed stores implement this so a
+   * deletion never races a full-ledger save: an out-of-date board snapshot
+   * writing the whole ledger back would otherwise erase tasks created by
+   * other writers (agent tools, the host scheduler, sibling tabs).
+   */
+  deleteTask?(id: string): void
   /** Drop the persisted ledger (leaves the in-memory state alone). */
   clear(): void
   /**
@@ -38,6 +75,17 @@ export interface TaskStore {
    * the backend has no cross-instance channel (in-memory store).
    */
   subscribeExternal?(listener: () => void): () => void
+  // --- todo ledger (optional; backends without todos omit the faces) ---
+  /** Read the todo ledger (empty when the backend has none). */
+  todos?(): TodoRecord[]
+  /** Optional async re-read of the todo ledger. */
+  refreshTodos?(): Promise<TodoRecord[]>
+  /** Persist the whole todo ledger (replaces the stored document). */
+  saveTodos?(todos: readonly TodoRecord[]): void
+  /** Optional single-todo upsert (same targeted-write rationale as putTask). */
+  putTodo?(todo: TodoRecord): void
+  /** Optional single-todo delete. */
+  deleteTodo?(id: string): void
 }
 
 /** Storage key for the task ledger document. */
@@ -94,24 +142,74 @@ function normalizeStatus(status: unknown): TaskStatus {
 }
 
 /**
- * Repair a persisted schedule rule: drop rules without a usable cron string,
- * coerce booleans/numbers, and leave `nextRunAt`/`lastTriggeredAt` undefined
- * when missing (a fresh recompute or the next tick fixes them).
+ * Repair a persisted schedule rule into the v2 shape (one discriminated rule
+ * with a `recurring` flag): a usable cron rule becomes recurring, a one-shot
+ * `onceAt` instant (or an explicit `recurring: false` row) becomes one-shot.
+ * Booleans/numbers are coerced and `nextRunAt`/`lastTriggeredAt` left
+ * undefined when missing (a fresh recompute or the next tick fixes them). A
+ * fired one-shot (nextRunAt consumed) is kept so the rule survives until the
+ * run settles.
  */
 function normalizeSchedule(schedule: unknown): ScheduleRule | undefined {
   if (typeof schedule !== 'object' || schedule === null) return undefined
   const rule = schedule as Record<string, unknown>
-  // Reject (drop) a schedule whose cron is not a well-formed 5-field
-  // expression: a malformed rule would otherwise linger as a never-firing
-  // schedule instead of being dropped for later repair.
-  if (typeof rule.cron !== 'string') return undefined
-  if (rule.cron.trim() === '' || !isValidCron(rule.cron)) return undefined
-  return {
-    enabled: rule.enabled === true,
-    cron: rule.cron,
-    nextRunAt: typeof rule.nextRunAt === 'number' ? rule.nextRunAt : undefined,
-    lastTriggeredAt: typeof rule.lastTriggeredAt === 'number' ? rule.lastTriggeredAt : undefined,
+  const cron = typeof rule.cron === 'string' ? rule.cron.trim() : ''
+  const onceAt = typeof rule.onceAt === 'number' ? rule.onceAt : undefined
+  const nextRunAt = typeof rule.nextRunAt === 'number' ? rule.nextRunAt : undefined
+  const lastTriggeredAt = typeof rule.lastTriggeredAt === 'number' ? rule.lastTriggeredAt : undefined
+  if (cron !== '') {
+    // A malformed cron rule would otherwise linger as a never-firing
+    // schedule instead of being dropped for later repair.
+    if (!isValidCron(cron)) return undefined
+    return {
+      enabled: rule.enabled === true,
+      recurring: true,
+      cron,
+      nextRunAt,
+      lastTriggeredAt,
+    }
   }
+  if (onceAt !== undefined) {
+    return {
+      enabled: rule.enabled === true,
+      recurring: false,
+      cron: '',
+      nextRunAt: nextRunAt ?? onceAt,
+      lastTriggeredAt,
+    }
+  }
+  if (rule.recurring === false) {
+    return {
+      enabled: rule.enabled === true,
+      recurring: false,
+      cron: '',
+      nextRunAt,
+      lastTriggeredAt,
+    }
+  }
+  return undefined
+}
+
+/**
+ * Apply a field-level update patch to a ledger (shared by the non-host
+ * backends). Only the patched fields change: executions and every other host
+ * -owned field survive untouched.
+ */
+function applyTaskUpdatePatch(tasks: readonly TaskRecord[], id: string, patch: TaskUpdatePatch, now: number): TaskRecord[] {
+  return tasks.map(task => {
+    if (task.id !== id) return task
+    const next: TaskRecord = { ...task, updatedAt: now }
+    if (patch.title !== undefined) next.title = patch.title
+    if (patch.description !== undefined) next.description = patch.description
+    if (patch.prompt !== undefined) next.prompt = patch.prompt
+    if (patch.workspacePath !== undefined) next.workspacePath = patch.workspacePath
+    if (patch.status !== undefined) next.status = patch.status
+    if (patch.schedule !== undefined) {
+      const { tasks: scheduled } = applySetSchedule([next], id, patch.schedule, now)
+      next.schedule = scheduled[0].schedule
+    }
+    return next
+  })
 }
 
 /** Parse + validate a persisted ledger document; invalid rows are dropped. */
@@ -185,6 +283,25 @@ export class LocalStorageTaskStore implements TaskStore {
     }
   }
 
+  deleteTask(id: string): void {
+    if (this.storage === undefined) return
+    this.save(this.load().filter(task => task.id !== id))
+  }
+
+  putTask(task: TaskRecord): void {
+    if (this.storage === undefined) return
+    const current = this.load()
+    const index = current.findIndex(candidate => candidate.id === task.id)
+    if (index >= 0) current[index] = task
+    else current.push(task)
+    this.save(current)
+  }
+
+  updateTask(id: string, patch: TaskUpdatePatch, now?: number): void {
+    if (this.storage === undefined) return
+    this.save(applyTaskUpdatePatch(this.load(), id, patch, now ?? Date.now()))
+  }
+
   clear(): void {
     if (this.storage === undefined) return
     try {
@@ -214,6 +331,7 @@ export class LocalStorageTaskStore implements TaskStore {
 /** In-memory backend (tests, and a fallback when storage is unavailable). */
 export class InMemoryTaskStore implements TaskStore {
   private ledger: TaskRecord[] = []
+  private todoLedger: TodoRecord[] = []
 
   load(): TaskRecord[] {
     return this.ledger.map(task => ({ ...task, executions: [...task.executions] }))
@@ -223,7 +341,39 @@ export class InMemoryTaskStore implements TaskStore {
     this.ledger = tasks.map(task => ({ ...task, executions: [...task.executions] }))
   }
 
+  deleteTask(id: string): void {
+    this.ledger = this.ledger.filter(task => task.id !== id)
+  }
+
+  putTask(task: TaskRecord): void {
+    const index = this.ledger.findIndex(candidate => candidate.id === task.id)
+    if (index >= 0) this.ledger[index] = { ...task, executions: [...task.executions] }
+    else this.ledger.push({ ...task, executions: [...task.executions] })
+  }
+
+  updateTask(id: string, patch: TaskUpdatePatch, now?: number): void {
+    this.ledger = applyTaskUpdatePatch(this.ledger, id, patch, now ?? Date.now())
+  }
+
   clear(): void {
     this.ledger = []
+  }
+
+  todos(): TodoRecord[] {
+    return [...this.todoLedger]
+  }
+
+  saveTodos(todos: readonly TodoRecord[]): void {
+    this.todoLedger = [...todos]
+  }
+
+  putTodo(todo: TodoRecord): void {
+    const index = this.todoLedger.findIndex(candidate => candidate.id === todo.id)
+    if (index >= 0) this.todoLedger[index] = { ...todo }
+    else this.todoLedger.push({ ...todo })
+  }
+
+  deleteTodo(id: string): void {
+    this.todoLedger = this.todoLedger.filter(todo => todo.id !== id)
   }
 }

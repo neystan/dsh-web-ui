@@ -2,10 +2,10 @@
  * dsh-task-board — host half. Mounts the host task store (`~/.dsh/task-board.json`),
  * the host task runner (real agent sessions), the host cron scheduler (fires
  * due tasks even without a GUI tab), the /api/task-board route family, the
- * agent tools (cron_create / cron_list / cron_pause / cron_resume /
- * cron_delete / cron_run + todo_add / todo_list / todo_done / todo_delete),
- * and a system-prompt announcement. The browser half (./client) renders the
- * board UI against the host ledger.
+ * agent tools (the `cron` tool with action=create/list/pause/resume/run/delete
+ * and the `todo` tool with action=add/list/done/delete), and a system-prompt
+ * announcement. The browser half (./client) renders the board UI against the
+ * host ledger.
  *
  * The retired browser-side scheduler and localStorage ledger are replaced by
  * this host plane: scheduled runs survive tab closes, and tasks/todos are
@@ -21,8 +21,7 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
 import { applyScheduleNextRun } from './core/use-cases/task-schedule.ts'
 import { CronScheduler } from './host/scheduler.ts'
-import { executeTask } from './host/execution-service.ts'
-import { TaskRunner } from './host/runner.ts'
+import { DISPATCHER_SESSION_ID, TaskRunner } from './host/runner.ts'
 import { makeRoutes } from './host/routes.ts'
 import { TaskBoardStore } from './host/store.ts'
 import { makeTools } from './host/tools.ts'
@@ -59,12 +58,14 @@ const DEFAULT_ANNOUNCE = true
 const SECTION_ORDER = 200
 
 /** Model-facing announcement: plugin presence, capabilities, and limits. */
-export const TASK_BOARD_GUIDANCE = '本机已安装 dsh-task-board 插件（DSH 任务看板 + 定时任务 + 待办）：侧边栏「任务看板」入口；数据与调度均在宿主进程（~/.dsh/task-board.json，关标签页照常执行）。能力：cron_create 创建定时任务（5 段 cron，如 0 23 * * *）、cron_list/cron_pause/cron_resume/cron_delete/cron_run 管理任务（真实 agent 会话执行，工作区为任务绑定路径）；todo_add/todo_list/todo_done/todo_delete 维护持久待办。限制：任务执行消耗 API 额度；cron 表达式须为 5 段（分 时 日 月 周）；执行会话使用部署默认预设（standard）。用户提到「任务看板 / 看板 / 定时任务 / cron / 待办 / todo」时即指本插件，请据此协作。'
+export const TASK_BOARD_GUIDANCE = '本机已安装 dsh-task-board 插件（DSH 任务看板 + 定时任务 + 待办）：侧边栏「任务看板」入口；数据与调度均在宿主进程（~/.dsh/task-board.json，关标签页照常执行）。能力：cron 工具（action=create/list/pause/resume/run/delete）创建与管理定时任务——周期任务用 recurring=true + cron（5 段 cron，如 0 23 * * *），一次性任务用 recurring=false + nextRunAt（带 UTC offset 的 ISO 时间）或 delaySeconds（相对秒数），执行使用真实 agent 会话，工作区为任务绑定路径；todo 工具（action=add/list/done/delete）维护持久待办。限制：任务执行消耗 API 额度；cron 表达式须为 5 段（分 时 日 月 周）；执行会话使用部署默认预设（standard）。用户提到「任务看板 / 看板 / 定时任务 / cron / 待办 / todo」时即指本插件，请据此协作。'
 
 /** The injected agents service surface (structural). */
 interface AgentsService {
   create(options: unknown): Promise<{ agent: Agent; dispose(): Promise<void> }>
+  resume(options: unknown): Promise<{ agent: Agent; dispose(): Promise<void> }>
   get(id: string): Agent | undefined
+  currentInitiator?(): Agent | undefined
   withoutInitiator<T>(operation: () => Promise<T>): Promise<T>
 }
 
@@ -91,9 +92,16 @@ export function apply(ctx: Context, config?: Config): void {
   const store = new TaskBoardStore()
   const agents = ctx.get('agents') as AgentsService
   const presets = ctx.get('agentPresets') as PresetsService | undefined
+  const defaultModel = ctx.get('agentDefaultModel') as
+    | { currentSelection(): { provider: string; model: string; reasoningEffort?: string } | undefined }
+    | undefined
+  const sessionTitle = ctx.get('sessionTitle') as
+    | { rename(session: unknown, title: string): unknown }
+    | undefined
   const runner = new TaskRunner(ctx, store, {
     agents: {
       create: options => agents.create(options),
+      resume: options => agents.resume(options),
       get: id => agents.get(id),
       withoutInitiator: operation => agents.withoutInitiator(operation),
     },
@@ -101,27 +109,37 @@ export function apply(ctx: Context, config?: Config): void {
       composeFrom: (agentCtx, parentCtx) => presets.composeFrom(agentCtx, parentCtx),
       recompose: (agentCtx, id) => presets.recompose(agentCtx, id),
     },
+    defaultModel: defaultModel === undefined ? undefined : {
+      currentSelection: () => defaultModel.currentSelection(),
+    },
     workspaces: {
       list: () => (ctx.get('workspaceRegistry') as { list(): { path: string }[] }).list(),
+      create: (path, title) => (ctx.get('workspaceRegistry') as { create(path: string, title: string): Promise<unknown> }).create(path, title),
+      attachSession: async (cwd, sessionId) => {
+        const registry = ctx.get('workspaceRegistry') as {
+          resolveByPath(path: string): Promise<{ attachSession(id: string): Promise<unknown> } | undefined>
+        }
+        const workspace = await registry.resolveByPath(cwd)
+        if (workspace !== undefined) await workspace.attachSession(sessionId)
+      },
+    },
+    sessionTitle: sessionTitle === undefined ? undefined : {
+      rename: (session, title) => sessionTitle.rename(session, title),
     },
     warn: message => ctx.logger?.warn?.(message),
   })
 
-  const tools = makeTools({ store, runner })
+  const tools = makeTools({
+    store,
+    runner,
+    isDispatcherCall: () => agents.currentInitiator?.()?.id === DISPATCHER_SESSION_ID,
+  })
   const routes = makeRoutes({ store, runner })
 
   let disposeScheduler: (() => void) | undefined
   let disposeRoutes: (() => void) | undefined
   let disposeTools: (() => void) | undefined
   let disposeSection: (() => void) | undefined
-
-  /** Trigger one task through the shared orchestration (scheduler + tools share this). */
-  const runTask = async (id: string): Promise<boolean> => {
-    const task = store.tasks().find(candidate => candidate.id === id)
-    if (task === undefined || task.status === 'running') return false
-    void executeTask(store, runner, task)
-    return true
-  }
 
   /** Sync every surface to the current source (settings edits take effect live). */
   const sync = (): void => {
@@ -154,13 +172,23 @@ export function apply(ctx: Context, config?: Config): void {
     )
     const scheduler = new CronScheduler({
       tasks: () => store.tasks(),
-      runTask,
+      dispatcherIdle: () => runner.dispatcherIdle(),
+      notifyDispatcher: due => runner.notifyDispatcher(due),
       applyScheduleNextRun: (id, nextRunAt, lastTriggeredAt) => {
-        store.replaceTasks(applyScheduleNextRun(store.tasks(), id, nextRunAt, lastTriggeredAt, Date.now()))
+        // Update ONLY the affected task (putTask): a full-ledger replace
+        // would race other writers (agent tools, the board, sibling tabs).
+        const current = store.tasks().find(task => task.id === id)
+        if (current === undefined || current.schedule === undefined) return
+        const [updated] = applyScheduleNextRun([current], id, nextRunAt, lastTriggeredAt, Date.now())
+        store.putTask(updated)
       },
+      removeTask: id => { store.removeTask(id) },
     }, value.schedulerTickMs)
     scheduler.start()
     disposeScheduler = () => { scheduler.dispose() }
+    // Bring the dispatcher session up front so the first due tick can hand
+    // over immediately (creation is async; failures are logged and retried).
+    void runner.ensureDispatcherSession()
   }
 
   installSettingsSection(ctx, TASK_BOARD_SETTINGS_NAMESPACE, Config, config ?? {}, {

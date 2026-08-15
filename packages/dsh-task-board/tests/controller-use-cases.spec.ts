@@ -96,8 +96,54 @@ describe('use-case: schedule', () => {
     const disarmed = applySetSchedule(armed.tasks, 'id-0', { enabled: false }, NOW)
     const schedule = disarmed.tasks[0].schedule!
     expect(schedule.enabled).toBe(false)
+    expect(schedule.recurring).toBe(true)
     expect(schedule.cron).toBe('* * * * *')
     expect(schedule.nextRunAt).toBeUndefined()
+  })
+
+  it('arms a one-shot rule via `at` and stores the trigger as nextRunAt', () => {
+    const result = applySetSchedule(seed(1), 'id-0', { enabled: true, at: NOW + 60_000 }, NOW)
+    expect(result.applied).toBe(true)
+    const schedule = result.tasks[0].schedule!
+    expect(schedule.recurring).toBe(false)
+    expect(schedule.cron).toBe('')
+    expect(schedule.nextRunAt).toBe(NOW + 60_000)
+  })
+
+  it('rejects a one-shot rule without a trigger', () => {
+    const before = seed(1)
+    const result = applySetSchedule(before, 'id-0', { enabled: true }, NOW)
+    expect(result.applied).toBe(false)
+    expect(result.tasks).toBe(before)
+  })
+
+  it('pausing a one-shot keeps its trigger; re-arming restores it', () => {
+    const armed = applySetSchedule(seed(1), 'id-0', { enabled: true, at: NOW + 60_000 }, NOW)
+    const paused = applySetSchedule(armed.tasks, 'id-0', { enabled: false }, NOW)
+    expect(paused.tasks[0].schedule?.enabled).toBe(false)
+    expect(paused.tasks[0].schedule?.nextRunAt).toBe(NOW + 60_000) // trigger kept
+    const resumed = applySetSchedule(paused.tasks, 'id-0', { enabled: true }, NOW)
+    expect(resumed.tasks[0].schedule?.enabled).toBe(true)
+    expect(resumed.tasks[0].schedule?.nextRunAt).toBe(NOW + 60_000)
+  })
+
+  it('keeps a fired one-shot (consumed trigger) when toggling enabled', () => {
+    const fired = applySetSchedule(seed(1), 'id-0', { enabled: true, at: NOW - 1 }, NOW)
+    const consumed = applyScheduleNextRun(fired.tasks, 'id-0', undefined, NOW, NOW)
+    const toggled = applySetSchedule(consumed, 'id-0', { enabled: false }, NOW)
+    expect(toggled.applied).toBe(true)
+    expect(toggled.tasks[0].schedule?.nextRunAt).toBeUndefined()
+    expect(toggled.tasks[0].schedule?.recurring).toBe(false)
+  })
+
+  it('switches modes: cron clears a one-shot, `at` switches back', () => {
+    const once = applySetSchedule(seed(1), 'id-0', { enabled: true, at: NOW + 60_000 }, NOW)
+    const recurring = applySetSchedule(once.tasks, 'id-0', { enabled: true, cron: '0 9 * * *' }, NOW)
+    expect(recurring.tasks[0].schedule?.recurring).toBe(true)
+    expect(recurring.tasks[0].schedule?.cron).toBe('0 9 * * *')
+    const back = applySetSchedule(recurring.tasks, 'id-0', { enabled: true, cron: '', at: NOW + 120_000 }, NOW)
+    expect(back.tasks[0].schedule?.recurring).toBe(false)
+    expect(back.tasks[0].schedule?.nextRunAt).toBe(NOW + 120_000)
   })
 
   it('rolls a ruler forward via applyScheduleNextRun', () => {
@@ -148,8 +194,6 @@ describe('BoardController routes use-cases (external contract)', () => {
     expect(controller.getSnapshot().tasks[0].title).toBe('renamed')
     expect(controller.setSchedule(task.id, { enabled: true, cron: '* * * * *' })).toBe(true)
     expect(store.load()[0].schedule?.enabled).toBe(true)
-    controller.applyScheduleNextRun(task.id, 1_000_002, 1_000_001)
-    expect(controller.getSnapshot().tasks[0].schedule?.nextRunAt).toBe(1_000_002)
     controller.deleteTask(task.id)
     expect(controller.getSnapshot().selectedTaskId).toBeUndefined()
     expect(controller.getSnapshot().tasks).toHaveLength(0)
