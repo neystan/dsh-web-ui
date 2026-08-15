@@ -21,6 +21,11 @@ import { isTaskStatus } from './tasks.ts'
 export interface TaskStore {
   /** Read the persisted ledger (empty when nothing is stored yet). */
   load(): TaskRecord[]
+  /**
+   * Optional async re-read of the persisted ledger (host-backed stores use
+   * this; the polling controller awaits it when present).
+   */
+  refresh?(): Promise<TaskRecord[]>
   /** Persist the whole ledger (replaces the stored document). */
   save(tasks: readonly TaskRecord[]): void
   /** Drop the persisted ledger (leaves the in-memory state alone). */

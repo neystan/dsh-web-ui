@@ -6,7 +6,6 @@
  */
 import { describe, expect, it } from 'vitest'
 import { BoardController, selectedTaskOf, type ControllerDeps } from '../src/core/controller.ts'
-import { ExecutionService } from '../src/core/execution.ts'
 import { InMemoryTaskStore } from '../src/core/store.ts'
 import { createTask, type TaskRecord } from '../src/core/tasks.ts'
 import { applyCreateTask } from '../src/core/use-cases/task-create.ts'
@@ -129,7 +128,7 @@ function makeController() {
   const store = new InMemoryTaskStore()
   const controller = new BoardController({
     store,
-    exec: new (class { run = async () => { }; reconcile = () => undefined })() as unknown as ExecutionService,
+    exec: new (class { run = async () => true })() as ControllerDeps['exec'],
     sessions: new FakeSessions(),
     now: () => NOW,
     uuid: () => 'id-x',

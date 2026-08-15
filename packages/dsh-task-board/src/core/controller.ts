@@ -2,21 +2,20 @@
  * Board controller: the single owner of task-ledger state and view state.
  *
  * It keeps the ledger in memory, persists every mutation through the
- * {@link TaskStore}, drives real executions through the
- * {@link ExecutionService}, and closes the board view whenever the user
- * navigates to a session (the sessions-list `current` selection changes).
- * Framework-free (structural runtime faces) so the whole orchestration is
- * unit-testable with fakes.
+ * {@link TaskStore} (the host-backed store in production), triggers real
+ * executions through the host runner, polls the ledger while a run settles,
+ * and closes the board view whenever the user navigates to a session (the
+ * sessions-list `current` selection changes). Framework-free (structural
+ * runtime faces) so the whole orchestration is unit-testable with fakes.
  *
  * The per use-case domain transitions (create/update/delete/schedule) live in
  * dedicated modules under core/use-cases and are applied here; the controller
  * owns only the orchestration seam (state, persistence, notify, execution,
- * navigation, reconciliation).
+ * navigation).
  */
-import { ExecutionService, type ExecutionEvent } from './execution.ts'
 import type { TaskStore } from './store.ts'
 import {
-  settleExecution, startExecution, withStatus,
+  withStatus,
   type NewTaskInput, type TaskRecord, type TaskStatus,
 } from './tasks.ts'
 import { applyCreateTask } from './use-cases/task-create.ts'
@@ -34,17 +33,28 @@ export interface SessionsControllerFace {
   open(id: string): void
 }
 
+/**
+ * The host-runner face: trigger a real execution on the host and let the
+ * controller poll the ledger for the settled state.
+ */
+export interface HostRunnerFace {
+  /** Trigger a host-side run of one task; resolves true when accepted. */
+  run(id: string, parentSessionId?: string): Promise<boolean>
+}
+
 /** Controller dependencies (all swappable in tests). */
 export interface ControllerDeps {
   store: TaskStore
-  exec: ExecutionService
+  exec: HostRunnerFace
   sessions: SessionsControllerFace
   /** Clock; defaults to Date.now. */
   now?: () => number
   /** Id minting; defaults to a random-uuid. */
   uuid?: () => string
-  /** Debounce (ms) for session-list-changed reconciles; defaults to 350. */
-  reconcileDebounceMs?: number
+  /** Poll cadence (ms) while a run settles; defaults to 2000. */
+  pollMs?: number
+  /** Give-up bound for one run's settlement poll; defaults to 30 minutes. */
+  pollTimeoutMs?: number
 }
 
 /** Immutable controller snapshot for UI subscriptions. */
@@ -90,22 +100,22 @@ export class BoardController {
   private readonly now: () => number
   private readonly uuid: () => string
 
-  /** @param deps - store, execution service, and the sessions navigation face. */
+  /** @param deps - store, host-runner face, and the sessions navigation face. */
   constructor(private readonly deps: ControllerDeps) {
     this.now = deps.now ?? (() => Date.now())
     this.uuid = deps.uuid ?? randomUuid
+    this.pollMs = deps.pollMs ?? 2_000
+    this.pollTimeoutMs = deps.pollTimeoutMs ?? 30 * 60_000
   }
 
   // --- lifecycle -------------------------------------------------------------
 
-  /** Load the persisted ledger and start the navigation/status subscriptions. */
+  /** Load the persisted ledger and start the navigation subscription. */
   start(): void {
     this.tasks = this.deps.store.load()
-    void this.reconcileRunningTasks()
-    // A sibling tab may have edited or deleted the ledger (same origin,
-    // storage events). Reload on external change so a task deleted in
-    // another tab stops firing here — and is never written back by this
-    // tab's stale copy (scheduler roll-forward, execution settlement).
+    // Leftover 'running' tasks (a run in flight when the page loaded) settle
+    // through the host ledger; watch them until they settle.
+    if (this.tasks.some(task => task.status === 'running')) this.startPolling()
     const unsubscribeExternal = this.deps.store.subscribeExternal?.(() => {
       this.tasks = this.deps.store.load()
       this.notify()
@@ -120,9 +130,8 @@ export class BoardController {
   /** Stop all subscriptions and drop retained state (idempotent). */
   dispose(): void {
     for (const dispose of this.disposers.splice(0)) dispose()
+    this.stopPolling()
     this.listeners.clear()
-    if (this.reconcileTimer !== undefined) clearTimeout(this.reconcileTimer)
-    this.reconcileTimer = undefined
   }
 
   // --- snapshot / subscription ------------------------------------------------
@@ -245,22 +254,21 @@ export class BoardController {
   // --- execution ---------------------------------------------------------------
 
   /**
-   * Execute a task for real: move it to 'running', open an execution record,
-   * and hand off to the ExecutionService. A second call while the task is
-   * already running is ignored.
+   * Execute a task for real: ask the host runner to open an execution on the
+   * task and run it, then poll the ledger until the run settles. A second
+   * call while the task is already running is ignored.
    */
   async runTask(id: string): Promise<boolean> {
     const task = this.tasks.find(candidate => candidate.id === id)
     if (task === undefined || task.status === 'running') return false
-    const { task: next, execution } = startExecution(task, this.now(), this.uuid())
-    this.tasks = this.tasks.map(candidate => candidate.id === id ? next : candidate)
-    this.persistAndNotify()
-    // This page owns the settlement of its own launches: the live watch
-    // (ExecutionService.run) settles on the turn boundary, and list
-    // reconciliation must not pre-empt it with a session that has not
-    // started a turn yet (its list row is idle, not completed).
-    this.activeExecutionIds.add(execution.id)
-    await this.deps.exec.run(next, execution, (event) => { this.handleExecutionEvent(event) })
+    const parentSessionId = this.deps.sessions.list.getSnapshot().current
+    const accepted = await this.deps.exec.run(id, parentSessionId)
+    if (!accepted) return false
+    // The host opened the execution and moved the task to 'running'; reload
+    // the ledger and watch it settle.
+    this.tasks = this.deps.store.load()
+    this.notify()
+    this.startPolling()
     return true
   }
 
@@ -275,30 +283,10 @@ export class BoardController {
     await this.runTask(id)
   }
 
-  private handleExecutionEvent(event: ExecutionEvent): void {
-    if (event.kind === 'started') {
-      this.tasks = this.tasks.map(task => task.id === event.taskId
-        ? attachSessionId(task, event.executionId, event.sessionId, this.now())
-        : task)
-      this.persistAndNotify()
-      return
-    }
-    this.activeExecutionIds.delete(event.executionId)
-    this.tasks = this.tasks.map(task => task.id === event.taskId
-      ? settleExecution(task, event.executionId, event.outcome, this.now(), event.error)
-      : task)
-    this.persistAndNotify()
-  }
-
   // --- internals ---------------------------------------------------------------
 
-  /** Reconcile running tasks and close the board when the user navigates. */
+  /** Close the board when the user navigates (selection changes). */
   private onSessionsChanged(): void {
-    // Background/leftover executions settle through the session list (their
-    // conversation snapshots stay cold until opened). Coalesce the burst of
-    // list notifications into one reconcile pass instead of fanning out a
-    // history read per notification; see scheduleReconcile.
-    this.scheduleReconcile()
     if (!this.boardOpen) return
     const current = currentOf(this.deps.sessions)
     if (current !== this.lastCurrent) this.closeBoard()
@@ -307,62 +295,41 @@ export class BoardController {
 
   private lastCurrent: string | undefined = undefined
 
-  /** Execution ids launched on this page; they settle via their live watch, never list reconciliation. */
-  private readonly activeExecutionIds = new Set<string>()
+  /** Poll timer while any task is running. */
+  private pollTimer: ReturnType<typeof setInterval> | undefined = undefined
+  private readonly pollMs: number
+  private readonly pollTimeoutMs: number
+  private pollDeadline = 0
 
-  /** Debounce timer for {@link reconcileRunningTasks}. */
-  private reconcileTimer: ReturnType<typeof setTimeout> | undefined = undefined
-
-  /** Whether a reconcile pass is underway (single-flight guard). */
-  private reconcileInFlight = false
-
-  /**
-   * Debounce + single-flight trigger for the running-task reconciliation.
-   * Session-list notifications arrive in bursts (one per session status
-   * change); both guards together keep a burst from reading the history API
-   * once per running task.
-   */
-  private scheduleReconcile(): void {
-    if (this.reconcileTimer !== undefined) return
-    this.reconcileTimer = setTimeout(() => {
-      this.reconcileTimer = undefined
-      void this.reconcileRunningTasks()
-    }, this.deps.reconcileDebounceMs ?? 350)
+  /** Start polling the host ledger until every running task settles. */
+  private startPolling(): void {
+    if (this.pollTimer !== undefined) return
+    this.pollDeadline = Date.now() + this.pollTimeoutMs
+    this.pollTimer = setInterval(() => { this.pollTick() }, this.pollMs)
   }
 
-  /** Settle tasks left 'running' whose sessions already finished. */
-  private async reconcileRunningTasks(): Promise<void> {
-    if (this.reconcileInFlight) return
-    this.reconcileInFlight = true
-    try {
-      type Settled = Extract<ExecutionEvent, { kind: 'settled' }>
-      const events: Array<{ taskId: string; event: Settled }> = []
-      for (const task of this.tasks) {
-        if (task.status !== 'running') continue
-        const execution = task.executions[task.executions.length - 1]
-        // Runs launched on this page settle through their live watch (turn
-        // boundary); reconciliation exists for background/leftover runs.
-        if (execution !== undefined && this.activeExecutionIds.has(execution.id)) continue
-        const event = await this.deps.exec.reconcile(task)
-        if (event !== undefined && event.kind === 'settled') events.push({ taskId: task.id, event })
-      }
-      if (events.length === 0) return
-      let changed = false
-      for (const { taskId, event } of events) {
-        // The reconcile call above awaited: a sibling tab may have rewritten
-        // the ledger (storage event reload) meanwhile. Re-read the freshest
-        // record now so the stale task captured before the await can never
-        // overwrite fields the sibling wrote.
-        const task = this.tasks.find(candidate => candidate.id === taskId)
-        if (task === undefined) continue
-        const next = settleExecution(task, event.executionId, event.outcome, this.now(), event.error)
-        if (next === task) continue
-        this.tasks = this.tasks.map(candidate => candidate.id === taskId ? next : candidate)
-        changed = true
-      }
-      if (changed) this.persistAndNotify()
-    } finally {
-      this.reconcileInFlight = false
+  /** Stop the settlement poll (idempotent). */
+  private stopPolling(): void {
+    if (this.pollTimer !== undefined) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = undefined
+    }
+  }
+
+  /** One poll pass: reload the ledger (async when the store supports it); stop once nothing is running (or on timeout). */
+  private pollTick(): void {
+    const apply = (tasks: TaskRecord[]): void => {
+      this.tasks = tasks
+      this.notify()
+      const anyRunning = tasks.some(task => task.status === 'running')
+      if (!anyRunning || Date.now() > this.pollDeadline) this.stopPolling()
+    }
+    if (this.deps.store.refresh !== undefined) {
+      void this.deps.store.refresh().then(apply).catch(() => {
+        // Transient host read failure: keep polling.
+      })
+    } else {
+      apply(this.deps.store.load())
     }
   }
 
@@ -373,21 +340,6 @@ export class BoardController {
 
   private notify(): void {
     for (const fn of [...this.listeners]) fn()
-  }
-}
-
-/** Record which session ran an execution (once the execution service reports it). */
-function attachSessionId(
-  task: TaskRecord,
-  executionId: string,
-  sessionId: string,
-  now: number,
-): TaskRecord {
-  return {
-    ...task,
-    updatedAt: now,
-    executions: task.executions.map(execution =>
-      execution.id === executionId ? { ...execution, sessionId } : execution),
   }
 }
 

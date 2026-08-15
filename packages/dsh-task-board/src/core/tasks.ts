@@ -64,6 +64,13 @@ export interface TaskRecord {
   executions: ExecutionRecord[]
   /** Optional scheduled-run rule (absent on tasks without a schedule). */
   schedule?: ScheduleRule
+  /**
+   * Absolute workspace path the task executes in (the execution session's
+   * cwd). Filled when the task is created from the board (the active session's
+   * cwd) or by an agent tool with an explicit workspace; empty tasks fall back
+   * to the first registered workspace at run time.
+   */
+  workspacePath?: string
 }
 
 /** Input for creating a task. */

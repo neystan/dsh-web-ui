@@ -1,8 +1,11 @@
 /**
- * Task-board client plugin: wires the framework-free core (controller,
- * execution service, store) to the real client runtime and mounts the two
- * DOM surfaces — the sidebar entry row and the board view in the center
- * column.
+ * Task-board client plugin: wires the framework-free core (controller) to the
+ * host task-board API and mounts the two DOM surfaces — the sidebar entry row
+ * and the board view in the center column.
+ *
+ * The host owns persistence, scheduling, and execution: the browser store is
+ * an API bridge, the scheduler is retired, and running a task triggers the
+ * host runner while the board polls the ledger for the settled state.
  *
  * Failure policy: DOM mounting problems are logged, never thrown — the web
  * shell fails the whole boot when a plugin apply throws, and an external
@@ -17,9 +20,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: pulls the settings-surface Context merge (ctx.settingsScope).
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { BoardController } from '../core/controller.ts'
-import { ExecutionService } from '../core/execution.ts'
-import { SchedulerService } from '../core/scheduler.ts'
-import { LocalStorageTaskStore } from '../core/store.ts'
+import { ApiTaskStore, TaskBoardApi } from './api.ts'
 import { claimTaskboardApply, releaseTaskboardApply } from './apply-guard.ts'
 import { mountBoard } from './board-mount.tsx'
 import { mountSidebarEntry } from './sidebar-entry.ts'
@@ -107,76 +108,52 @@ export function apply(ctx: ClientContext): void {
   let uiDisposer: (() => void) | undefined
   const mountUi = (): void => {
     if (uiDisposer !== undefined) return
-    const sessions = ctx.sessions
-    const workspaces = ctx.workspaces
-    const connection = ctx.get('connection') as ConnectionHandle
+    // The cordis Context `sessions` member is augmented by both the host
+    // types (SessionStore) and the client types (ISessions) depending on
+    // which packages the compilation graph pulls in; pin the client face the
+    // board needs through a structural cast instead of relying on the merge.
+    const sessions = ctx.sessions as unknown as {
+      list: { getSnapshot(): { current: string | undefined }; subscribe(fn: () => void): () => void }
+      open(id: string): void
+    }
+    const api = new TaskBoardApi()
+    const store = new ApiTaskStore(api)
 
-    // Core wiring: real runtime faces into the framework-free services.
-    const store = new LocalStorageTaskStore()
-    const exec = new ExecutionService({
-      sessions: {
-        list: sessions.list,
-        binding: id => sessions.binding(id as SessionId),
-      },
-      workspaces: {
-        list: workspaces.list,
-        connectWorkspace: id => workspaces.connectWorkspace(id as WorkspaceId),
-      },
-      history: {
-        loadTail: async sessionId => {
-          const response = await connection.api.sessions.history({
-            sessionId: sessionId as SessionId,
-            maxMessages: 20,
-          })
-          return response.result.ok
-            ? { events: response.result.value.events.map(entry => entry.event) }
-            : undefined
+    // The board mounts once the host ledger is reachable (async initial load
+    // includes the one-shot legacy localStorage migration).
+    void store.refresh().then(() => {
+      if (uiDisposer !== undefined) return
+      const controller = new BoardController({
+        store,
+        exec: {
+          run: (id, parentSessionId) => api.run(id, parentSessionId),
         },
-      },
-    })
-    const controller = new BoardController({
-      store,
-      exec,
-      sessions: {
-        list: sessions.list,
-        open: id => sessions.open(id as SessionId),
-      },
-    })
-    controller.start()
+        sessions: {
+          list: sessions.list,
+          open: id => sessions.open(id),
+        },
+      })
+      controller.start()
 
-    // Scheduled runs: a browser-side heartbeat that triggers due tasks through
-    // the same run path as the manual Run button. The first tick is gated on
-    // the session list baseline so a page-load catch-up never fires into a
-    // not-yet-ready runtime; tab visibility recovery ticks immediately.
-    const scheduler = new SchedulerService({
-      tasks: () => controller.getSnapshot().tasks,
-      now: () => Date.now(),
-      runTask: id => controller.runTask(id),
-      applySchedule: (id, nextRunAt, lastTriggeredAt) =>
-        controller.applyScheduleNextRun(id, nextRunAt, lastTriggeredAt),
-      ready: () => sessions.list.getSnapshot().phase === 'ready',
-      environment: {
-        addEventListener: (type, listener) => document.addEventListener(type, listener),
-        removeEventListener: (type, listener) => document.removeEventListener(type, listener),
-      },
+      const disposers: Array<() => void> = []
+      try {
+        disposers.push(mountSidebarEntry(controller))
+        disposers.push(mountBoard(controller))
+      } catch (error) {
+        // DOM failures degrade the board, never the GUI.
+        console.error('[dsh-task-board] mount failed:', error)
+      }
+
+      uiDisposer = () => {
+        for (const dispose of disposers.splice(0)) dispose()
+        controller.dispose()
+        uiDisposer = undefined
+      }
+    }).catch(error => {
+      // The host API is unreachable (plugin host half not loaded): degrade
+      // the board instead of failing the GUI boot.
+      console.error('[dsh-task-board] host ledger unavailable; board disabled', error)
     })
-    scheduler.start()
-
-    const disposers: Array<() => void> = []
-    try {
-      disposers.push(mountSidebarEntry(controller))
-      disposers.push(mountBoard(controller))
-    } catch (error) {
-      // DOM failures degrade the board, never the GUI.
-      console.error('[dsh-task-board] mount failed:', error)
-    }
-
-    uiDisposer = () => {
-      for (const dispose of disposers.splice(0)) dispose()
-      scheduler.dispose()
-      controller.dispose()
-      uiDisposer = undefined
-    }
   }
   const syncEnabled = (): void => {
     const snapshot = settingsScope.getSnapshot()
