@@ -71,7 +71,7 @@ function placeEntry(root: HTMLElement, entry: HTMLButtonElement): boolean {
     const row = button.closest('[class*="logoRow"]')
     const base = (row !== null && row.parentElement === root) ? row : button
     const family = Array.from(root.children).filter(
-      (el): el is HTMLElement => el instanceof HTMLElement && el.matches('[data-dsh-taskboard-entry], [data-dsh-ssh-entry]'),
+      (el): el is HTMLElement => el instanceof HTMLElement && el.matches('[data-dsh-taskboard-entry]'),
     )
     // task board sits before the whole family block.
     const anchor = family.length > 0 ? family[0] : base.nextElementSibling

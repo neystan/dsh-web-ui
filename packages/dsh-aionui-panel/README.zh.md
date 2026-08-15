@@ -44,7 +44,7 @@ dsh plugin --profile web add link:$(pwd)/packages/dsh-aionui-panel
 
 - host 半区（`src/index.ts` + `src/host/`）经 `/aionui-panel/*` HTTP 路由提供目录列举、文件读取（文本 80k 字符上限 / 图片 data URL）、写入（mtime 冲突检测）、文件名搜索（跳过 .git / node_modules）、git status（porcelain v1 -z）/ stage / unstage / discard，以及 SSE 变更流（fs 监听 + git 轮询）。
 - 所有操作经过工作区门卫：路径必须落在已注册 workspace 内（realpath 规范化 + 前缀校验），浏览器只能读写项目根下的相对路径。
-- 所有 `/aionui-panel/*` 路由（JSON 操作、raw 读取与 SSE 事件流）仅限 loopback：非 loopback 客户端在任何工作区访问前即收到 `403 forbidden: loopback-only`，与 dsh-ssh 的 fence 一致。
+- 所有 `/aionui-panel/*` 路由（JSON 操作、raw 读取与 SSE 事件流）仅限 loopback：非 loopback 客户端在任何工作区访问前即收到 `403 forbidden: loopback-only`，与全家桶统一的 loopback fence 一致。
 - 递归 watcher 忽略 `node_modules` / `.git` 下的变更；SCM 轮询每 30s 对每个 workspace 探测一次（单次探测有 15s 超时兜底），非 git 仓库的根经 TTL 缓存不再反复探测。文件编辑经 watcher 即时呈现；仅 `.git` 元数据变更（其他工具的 commit/checkout）在一个轮询周期内或窗口重新聚焦（5s 节流）时呈现。
 - browser 半区（`src/client/`）以当前会话 cwd 作为项目根，切换会话即切换项目。
 

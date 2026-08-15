@@ -107,7 +107,7 @@ Release 更新说明由 `scripts/release-notes.mjs` 从常规提交自动分组�
 | 本文件（根 AGENTS.md） | 仓库布局、命令、全局规则，每个会话都需要 |
 | [packages/AGENTS.md](packages/AGENTS.md) | 包级规则：SDK 约束、bundle 形态、测试纪律 |
 | [docs/AGENTS.md](docs/AGENTS.md) | 文档标准：结构分层、写作规则、i18n 配对、预算 |
-| 各包 `AGENTS.md` | 该包特有规则（如 dsh-ssh 安全模型、dsh-skins 构建链） |
+| 各包 `AGENTS.md` | 该包特有规则（如 dsh-skins 构建链） |
 
 ## 编辑这些指令
 

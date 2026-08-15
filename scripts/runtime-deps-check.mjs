@@ -16,7 +16,7 @@
  * instead of at user boot.
  *
  * Only git-tracked lib/ files are scanned: some packages deliberately do not
- * commit lib/ (e.g. dsh-ssh ships a release build that bundles its deps), so
+ * commit lib/ (e.g. some family packages ship release builds that bundle their deps), so
  * scanning the working tree would flag stale build leftovers that are not
  * part of the repository's shipped state.
  *

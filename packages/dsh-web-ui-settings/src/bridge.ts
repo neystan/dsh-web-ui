@@ -22,7 +22,7 @@ import type { BridgeDescribeResult, BridgeMutateRequest, BridgeMutateResult, Bri
 /** Cap on JSON request bodies (a single mutate is tiny). */
 const MAX_JSON_BODY_BYTES = 64 * 1024
 
-/** Loopback literal check plus browser same-origin markers (mirrors the dsh-ssh route fence). */
+/** Loopback literal check plus browser same-origin markers (mirrors the family route fence). */
 function isLoopbackRequest(request: IncomingMessage): boolean {
   const address = request.socket.remoteAddress
   if (address !== '127.0.0.1' && address !== '::1' && address !== '::ffff:127.0.0.1') return false

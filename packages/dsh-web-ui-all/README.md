@@ -6,7 +6,7 @@ The one-click aggregate package for the whole dsh web UI family: installing it b
 
 ## What it is
 
-- **One install, everything on**: its dependencies pull in all sub-plugin packages (dsh-client-ui-aionui-panel / dsh-client-ui-task-board / dsh-client-ui-git-graph / dsh-pet / dsh-remote-web-ui / dsh-live-stats / dsh-ssh / dsh-client-ui-web-ui-settings / dsh-skins).
+- **One install, everything on**: its dependencies pull in all sub-plugin packages (dsh-client-ui-aionui-panel / dsh-client-ui-task-board / dsh-client-ui-git-graph / dsh-pet / dsh-client-ui-web-ui-settings / dsh-skins).
 - **Aggregation carrier**: `cordis.patch.yml` aggregates the `insert` lines of each sub-plugin, mounted through the dsh plugin profile mechanism.
 
 ## Install
@@ -32,5 +32,5 @@ Restart `dsh web` for the plugins to take effect.
 ## Known limitations
 
 - Every sub-plugin activates together. For only a subset, install that sub-plugin package directly.
-- Do not install the aggregate package alongside the standalone package of the same plugin (e.g. @linxin666/dsh-liangshen); run `dsh plugin remove` on the old package before switching.
+- Do not install the aggregate package alongside the standalone package of the same plugin (e.g. @linxin666/dsh-pet); run `dsh plugin remove` on the old package before switching.
 - Dependencies on the `@deepseek-ai/*` SDK are pinned; compatibility follows the repository's release cadence.

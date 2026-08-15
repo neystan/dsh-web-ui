@@ -15,10 +15,7 @@
 
 /** Settings namespaces the dsh-web-ui family plugins register. */
 export const FAMILY_NAMESPACES = [
-  'dsh-ssh',
   'task-board',
-  'remote-web-ui',
-  'live-stats',
   'pet',
   'describe-image',
   'skin-background',
@@ -30,15 +27,9 @@ export const FAMILY_NAMESPACES = [
  * elsewhere, e.g. localStorage), so the entry is intentionally ignored.
  */
 const NAMESPACE_ALIASES: Readonly<Record<string, string | null>> = {
-  'dsh-ssh': 'dsh-ssh',
-  ssh: 'dsh-ssh',
   'dsh-client-ui-task-board': 'task-board',
   'dsh-task-board': 'task-board',
   'task-board': 'task-board',
-  'dsh-live-stats': 'live-stats',
-  'live-stats': 'live-stats',
-  'dsh-remote-web-ui': 'remote-web-ui',
-  'remote-web-ui': 'remote-web-ui',
   'dsh-pet': 'pet',
   pet: 'pet',
   'dsh-skins': 'skin-background',

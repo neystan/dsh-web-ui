@@ -30,19 +30,19 @@ const MANIFEST = [
   {
     file: 'settings-form.ts',
     source: 'shared/client/settings/settings-form.ts',
-    targets: ['dsh-pet', 'dsh-task-board', 'dsh-remote-web-ui', 'dsh-live-stats', 'dsh-tool-describe-image']
+    targets: ['dsh-pet', 'dsh-task-board', 'dsh-tool-describe-image']
       .map(pkg => `packages/${pkg}/src/client/settings-form.ts`),
   },
   {
     file: 'PluginSettingsCard.tsx',
     source: 'shared/client/settings/PluginSettingsCard.tsx',
-    targets: ['dsh-pet', 'dsh-task-board', 'dsh-remote-web-ui', 'dsh-live-stats', 'dsh-tool-describe-image']
+    targets: ['dsh-pet', 'dsh-task-board', 'dsh-tool-describe-image']
       .map(pkg => `packages/${pkg}/src/client/PluginSettingsCard.tsx`),
   },
   {
     file: 'settings-card.module.css',
     source: 'shared/client/settings/settings-card.module.css',
-    targets: ['dsh-pet', 'dsh-task-board', 'dsh-remote-web-ui', 'dsh-live-stats', 'dsh-tool-describe-image']
+    targets: ['dsh-pet', 'dsh-task-board', 'dsh-tool-describe-image']
       .map(pkg => `packages/${pkg}/src/client/settings-card.module.css`),
   },
   {
@@ -58,7 +58,6 @@ const MANIFEST = [
     source: 'shared/host/dsh-home.ts',
     targets: [
       'packages/dsh-pet/src/dsh-home.ts',
-      'packages/dsh-liangshen/src/dsh-home.ts',
     ],
   },
 ]

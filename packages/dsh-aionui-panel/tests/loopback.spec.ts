@@ -1,6 +1,6 @@
 /**
  * Loopback fence tests for the /aionui-panel routes: non-loopback clients get
- * the same 403 "forbidden: loopback-only" body dsh-ssh uses for every JSON
+ * the same 403 "forbidden: loopback-only" body the family uses for every JSON
  * operation and for the SSE events route (before the root is gated or the
  * stream opens), while loopback clients keep working.
  */

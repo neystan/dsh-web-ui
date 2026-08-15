@@ -693,7 +693,7 @@ describe('npm-install layout registry scan (issue #21/#33/#34)', () => {
       mkdirSync(join(scoped, 'dsh-client-ui-skin-qq98'), { recursive: true })
       mkdirSync(join(scoped, 'dsh-client-ui-skin-ths'), { recursive: true })
       // Non-skin packages in the same scoped dir must be skipped.
-      mkdirSync(join(scoped, 'dsh-ssh'), { recursive: true })
+      mkdirSync(join(scoped, 'dsh-pet'), { recursive: true })
       mkdirSync(join(scoped, 'dsh-task-board'), { recursive: true })
       writeFileSync(join(scoped, 'dsh-client-ui-skin-qq98', 'skin.json'), JSON.stringify({
         id: 'qq98',
@@ -751,7 +751,7 @@ describe('bundled-skins carrier (dsh-skins/skins/<id>, npm layout)', () => {
       // A legacy per-skin package coexisting (already published installs).
       mkdirSync(join(scoped, 'dsh-client-ui-skin-qq98'), { recursive: true })
       // A non-skin package in the same scoped dir.
-      mkdirSync(join(scoped, 'dsh-ssh'), { recursive: true })
+      mkdirSync(join(scoped, 'dsh-pet'), { recursive: true })
       writeFileSync(join(carrier, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
         package: '@linxin666/dsh-client-ui-skin-miku',

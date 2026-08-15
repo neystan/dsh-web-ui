@@ -1,7 +1,7 @@
 /**
  * DSH_HOME resolution shared by the plugin family's Host halves: the
  * environment override wins, the platform home fallback follows. Mirrors
- * what dsh-pet and dsh-liangshen each used to implement locally.
+ * what dsh-pet used to implement locally.
  */
 
 import { homedir } from 'node:os'

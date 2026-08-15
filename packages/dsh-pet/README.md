@@ -73,7 +73,7 @@ global React root (createRoot → document.body) <-- polling 800ms -- pet-client
 - **Multi-session semantics**: the API and browser mount are host-global and expose no foreground-session identity, so the most recent meaningful event wins the display. Every session's completed turns are still rewarded independently, and disposing a non-current session does not reset the visible state.
 - **Mount point**: `document.body` (global React root, always shown: no session / new session / mid-session — the old mount point `conversation.composer.dock` only rendered in an active session, hiding the pet in new sessions); the component uses `createPortal` internally to render the global floating layer.
 - **Rendering**: CSS sprite (background-position) per-frame animation, frame durations from the track definitions in `spritesheet.ts`.
-- **Communication**: browser ↔ host over the same-origin `/api/pet/*` JSON endpoints (state/interact/set-visible/set-config); the atlas loads from `/pet/whale/spritesheet.webp` — both the RPC domain and the `/plugins/` static service are platform-registered, and the plugin self-sufficiently provides its own API and assets (the same pattern as dsh-remote-web-ui's `/api/pair`).
+- **Communication**: browser ↔ host over the same-origin `/api/pet/*` JSON endpoints (state/interact/set-visible/set-config); the atlas loads from `/pet/whale/spritesheet.webp` — both the RPC domain and the `/plugins/` static service are platform-registered, and the plugin self-sufficiently provides its own API and assets (the same pattern as the family RPC domains).
 
 ## Install
 

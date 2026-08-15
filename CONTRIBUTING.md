@@ -47,7 +47,7 @@ active panel (#76 #87)`。提交信息禁止 emoji（全仓规则）。
    `README.zh.md` + `README.i18n.yaml`），改完任一侧后重录配对记录：
 
 ```sh
-pnpm docs:write-pair <包目录名>   # 如 dsh-ssh 或 qq98
+pnpm docs:write-pair <包目录名>   # 如 dsh-pet 或 qq98
 ```
 
 3. **无 emoji**：代码、注释、文档、提交信息均不得出现 emoji（CI 有全树
@@ -84,7 +84,7 @@ pnpm docs:write-pair <包目录名>   # 如 dsh-ssh 或 qq98
 | [AGENTS.md](AGENTS.md) | 布局、命令、全局约定、开发与贡献流程 | 每个会话 |
 | [packages/AGENTS.md](packages/AGENTS.md) | 包级规则：SDK 约束、bundle 形态、测试纪律 | 改 packages/ 前 |
 | [docs/AGENTS.md](docs/AGENTS.md) | 文档标准：结构分层、写作规则、i18n 配对、预算 | 写文档前 |
-| 各包 `AGENTS.md` | 该包特有规则（如 dsh-ssh 安全模型） | 改对应包前 |
+| 各包 `AGENTS.md` | 该包特有规则（如 dsh-skins 构建链） | 改对应包前 |
 | [docs/development.md](docs/development.md) | 日常开发与发布流程 | 需要细节时 |
 | [docs/i18n.md](docs/i18n.md) | 双语文档配对契约 | 改 README 时 |
 

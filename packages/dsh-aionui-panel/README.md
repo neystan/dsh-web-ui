@@ -44,7 +44,7 @@ The real filesystem and the real git repository, no mocks:
 
 - The host half (`src/index.ts` + `src/host/`) serves directory listing, file reads (text capped at 80k chars / image data URLs), writes (mtime conflict detection), filename search (skipping .git / node_modules), git status (porcelain v1 -z) / stage / unstage / discard, and an SSE change stream (fs watching + git polling) over the `/aionui-panel/*` HTTP routes.
 - All operations pass through a workspace guard: paths must fall inside a registered workspace (realpath normalization + prefix check); the browser can only read/write relative paths under the project root.
-- Every `/aionui-panel/*` route (JSON operations, raw reads, and the SSE events stream) is loopback-only: non-loopback clients get `403 forbidden: loopback-only` before any workspace access, matching the dsh-ssh fence.
+- Every `/aionui-panel/*` route (JSON operations, raw reads, and the SSE events stream) is loopback-only: non-loopback clients get `403 forbidden: loopback-only` before any workspace access, matching the family loopback fence.
 - The recursive watcher ignores changes under `node_modules` / `.git`; the SCM poll runs every 30s per workspace (each probe bounded by a 15s deadline), and roots that are not git repositories stop being re-probed thanks to a TTL cache. File edits surface via the watcher immediately; `.git`-only changes (commits/checkouts from other tools) appear within one poll interval or on window focus (throttled to once per 5s).
 - The browser half (`src/client/`) treats the current session cwd as the project root; switching sessions switches projects.
 

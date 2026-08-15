@@ -1,7 +1,7 @@
 /**
  * Route-layer tests for /git/*: the loopback fence must reject non-loopback
  * clients (JSON operations and the SSE stream alike) with the same 403 body
- * dsh-ssh uses, while loopback clients keep working exactly as before.
+ * the family uses, while loopback clients keep working exactly as before.
  * Exercises the handlers through a fake ctx.webServer registry.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'

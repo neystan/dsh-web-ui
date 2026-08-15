@@ -14,7 +14,7 @@ test('packageFiles: walks packages/ and packages/skins/ non-recursively', () => 
   const dir = mkdtempSync(join(tmpdir(), 'dsh-release-assets-'))
   try {
     for (const pkg of [
-      'packages/dsh-ssh/package.json',
+      'packages/dsh-pet/package.json',
       'packages/dsh-skins/package.json',
       'packages/skins/miku/package.json',
       'packages/skins/skin-center/package.json',
@@ -28,7 +28,7 @@ test('packageFiles: walks packages/ and packages/skins/ non-recursively', () => 
     const files = packageFiles(dir)
     assert.deepEqual(files, [
       join(dir, 'packages/dsh-skins/package.json'),
-      join(dir, 'packages/dsh-ssh/package.json'),
+      join(dir, 'packages/dsh-pet/package.json'),
       join(dir, 'packages/skins/miku/package.json'),
       join(dir, 'packages/skins/skin-center/package.json'),
     ])
@@ -41,16 +41,16 @@ test('packOne: packs the exact published version and resolves the tarball path',
   const calls = []
   const fakeRun = (file, args, options) => {
     calls.push({ file, args, options })
-    return JSON.stringify([{ filename: 'linxin666-dsh-ssh-0.1.15.tgz' }])
+    return JSON.stringify([{ filename: 'linxin666-dsh-pet-0.1.15.tgz' }])
   }
-  const out = packOne('@linxin666/dsh-ssh', '0.1.15', '/tmp/assets', fakeRun)
+  const out = packOne('@linxin666/dsh-pet', '0.1.15', '/tmp/assets', fakeRun)
   assert.deepEqual(calls[0].args, [
-    'pack', '@linxin666/dsh-ssh@0.1.15', '--pack-destination', '/tmp/assets', '--json',
+    'pack', '@linxin666/dsh-pet@0.1.15', '--pack-destination', '/tmp/assets', '--json',
   ])
-  assert.equal(out, join('/tmp/assets', 'linxin666-dsh-ssh-0.1.15.tgz'))
+  assert.equal(out, join('/tmp/assets', 'linxin666-dsh-pet-0.1.15.tgz'))
 })
 
 test('packOne: rejects when npm pack reports no filename', () => {
   const fakeRun = () => JSON.stringify([])
-  assert.throws(() => packOne('@linxin666/dsh-ssh', '0.1.15', '/tmp/assets', fakeRun), /no filename/)
+  assert.throws(() => packOne('@linxin666/dsh-pet', '0.1.15', '/tmp/assets', fakeRun), /no filename/)
 })

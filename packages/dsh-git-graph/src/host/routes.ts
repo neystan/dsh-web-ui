@@ -73,12 +73,11 @@ const MALFORMED_VIEW: GitError = { code: 'internal', message: 'malformed git res
 const BODY_CAP_BYTES = 1 << 20
 
 /**
- * Loopback trust fence — the same judgment dsh-ssh applies to its host
+ * Loopback trust fence — the same judgment the family applies to its host
  * routes: a loopback socket address AND a loopback Host header, plus browser
  * same-origin markers. The /git operations mutate the real repository, so a
  * LAN-exposed dsh web must not serve them to unpaired devices. The socket
- * address is authoritative; X-Forwarded-For is never trusted (matching
- * dsh-ssh).
+ * address is authoritative; X-Forwarded-For is never trusted (matching the family fence).
  */
 function isLoopbackRequest(request: IncomingMessage): boolean {
   const address = request.socket.remoteAddress
@@ -102,7 +101,7 @@ function isLoopbackRequest(request: IncomingMessage): boolean {
   }
 }
 
-/** Write the shared non-loopback rejection (same body as dsh-ssh). */
+/** Write the shared non-loopback rejection (family-standard body). */
 function forbidden(res: ServerResponse): void {
   res.writeHead(403, { 'content-type': 'application/json; charset=utf-8' })
   res.end(JSON.stringify({ error: 'forbidden: loopback-only' }))

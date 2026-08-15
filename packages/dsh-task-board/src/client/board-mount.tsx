@@ -22,8 +22,6 @@ export const BOARD_VIEW_SELECTOR = '[data-dsh-taskboard-view]'
 
 const CONVERSATION_COLUMN_SELECTOR = '[data-pane="conversation"], [class*="centerCol"]'
 const ACTIVE_ATTR = 'data-dsh-taskboard-active'
-/** The sibling panel's activation attribute (ssh), removed when this panel opens. */
-const OTHER_ACTIVE_ATTR = 'data-dsh-ssh-active'
 /** Cross-plugin activation event; detail is the activating panel name. */
 const ACTIVATE_EVENT = 'dsh-panel-activate'
 const PANEL_NAME = 'taskboard'
@@ -61,20 +59,12 @@ export function mountBoard(controller: BoardController): () => void {
 
   const applyActive = (): void => {
     if (controller.getSnapshot().boardOpen) {
-      // Single-occupant center column: opening this panel must evict the
-      // sibling panel (ssh), both its html attribute and its controller
-      // state, otherwise the two panels' visibility rules fight and the
-      // second click appears dead.
-      document.documentElement.removeAttribute(OTHER_ACTIVE_ATTR)
+      // Single-occupant center column: announce the activation so sibling
+      // panels (future family plugins) can evict themselves.
       document.documentElement.setAttribute(ACTIVE_ATTR, '')
       document.dispatchEvent(new CustomEvent(ACTIVATE_EVENT, { detail: PANEL_NAME }))
     } else {
       document.documentElement.removeAttribute(ACTIVE_ATTR)
-    }
-  }
-  const onOtherActivate = (event: Event): void => {
-    if ((event as CustomEvent).detail === 'ssh' && controller.getSnapshot().boardOpen) {
-      controller.closeBoard()
     }
   }
   // Jump out on sidebar context clicks: clicking a session/workspace row
@@ -89,14 +79,12 @@ export function mountBoard(controller: BoardController): () => void {
     if (target.closest(SIDEBAR_ROW_SELECTOR) !== null) controller.closeBoard()
   }
   document.addEventListener('click', onClickSidebarRow, true)
-  document.addEventListener(ACTIVATE_EVENT, onOtherActivate)
   const unsubscribe = controller.subscribe(applyActive)
   applyActive()
   ensure()
 
   return () => {
     document.removeEventListener('click', onClickSidebarRow, true)
-    document.removeEventListener(ACTIVATE_EVENT, onOtherActivate)
     waitObserver.disconnect()
     unsubscribe()
     document.documentElement.removeAttribute(ACTIVE_ATTR)
