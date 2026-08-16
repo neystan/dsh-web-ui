@@ -15,8 +15,11 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { SkinCenter, type SkinCenterInjected } from './SkinCenter.tsx'
 import { BackgroundController, SKIN_BACKGROUND_NS } from './background.ts'
+import { CustomThemeController } from './custom-theme.ts'
+import type { BackgroundSettings } from '../core/background.ts'
+import { CUSTOM_THEME_NS, type CustomThemeSettings } from '../core/theme.ts'
 import { en, zh, type SkinCenterKey } from './locales.ts'
-import { TryOnController } from './try-on.ts'
+import { activeSkinEntry, TryOnController } from './try-on.ts'
 
 export type { SkinCenterComponentProps, SkinCenterInjected } from './SkinCenter.tsx'
 export { TryOnController } from './try-on.ts'
@@ -78,24 +81,42 @@ export function apply(ctx: ClientContext): void {
   }, 'ui-skin-center: body scope')
 
   const theme = ctx.get('theme') as ThemeRuntime
-  const controller = new TryOnController()
-  // Background occluder over the shared skin-background namespace. The scope
-  // is bound to this plugin's fiber, so it is torn down with the card.
   const binder = ctx.get('webUiSettings') ?? ctx.settingsScope
-  const backgroundScope = binder.bind<{ backgroundOpacity?: number }>({ namespace: SKIN_BACKGROUND_NS })
+  const backgroundScope = binder.bind<BackgroundSettings>({ namespace: SKIN_BACKGROUND_NS })
+  const customThemeScope = binder.bind<CustomThemeSettings>({ namespace: CUSTOM_THEME_NS })
   const background = new BackgroundController(backgroundScope)
+  const customTheme = new CustomThemeController(
+    customThemeScope,
+    document.body,
+    activeSkinEntry() === undefined,
+  )
+  const controller = new TryOnController({
+    appearance: {
+      beforeSurfaceChange: () => {
+        customTheme.suspend()
+        background.suspend()
+      },
+      afterSurfaceChange: () => { background.resume() },
+      afterExit: () => {
+        customTheme.resume()
+        background.resume()
+      },
+    },
+  })
+  ctx.effect(() => () => {
+    controller.exit()
+    customTheme.dispose()
+    background.dispose()
+  }, 'ui-skin-center: appearance controllers')
   const injected = (): SkinCenterInjected => ({
     controller,
+    customTheme,
     theme: {
       getTheme: () => theme.getTheme(),
       subscribe: listener => ctx.on('theme/change', listener),
       setTheme: id => theme.setTheme(id),
     },
-    background: {
-      opacity: () => background.opacity(),
-      subscribe: listener => background.subscribe(listener),
-      set: opacity => background.set(opacity),
-    },
+    background,
   })
 
   ctx.slots.inject('web-ui.plugin.item', () => ctx.slots.register({

@@ -19,6 +19,7 @@ export const FAMILY_NAMESPACES = [
   'pet',
   'describe-image',
   'skin-background',
+  'skin-custom-theme',
 ] as const
 
 /**
@@ -26,16 +27,17 @@ export const FAMILY_NAMESPACES = [
  * means the package owns no settings namespace (its configuration lives
  * elsewhere, e.g. localStorage), so the entry is intentionally ignored.
  */
-const NAMESPACE_ALIASES: Readonly<Record<string, string | null>> = {
+const NAMESPACE_ALIASES: Readonly<Record<string, string | readonly string[] | null>> = {
   'dsh-client-ui-task-board': 'task-board',
   'dsh-task-board': 'task-board',
   'task-board': 'task-board',
   'dsh-pet': 'pet',
   pet: 'pet',
-  'dsh-skins': 'skin-background',
-  'dsh-client-ui-skin-center': 'skin-background',
-  'skin-center': 'skin-background',
+  'dsh-skins': ['skin-background', 'skin-custom-theme'],
+  'dsh-client-ui-skin-center': ['skin-background', 'skin-custom-theme'],
+  'skin-center': ['skin-background', 'skin-custom-theme'],
   'skin-background': 'skin-background',
+  'skin-custom-theme': 'skin-custom-theme',
   'describe-image': 'describe-image',
   'dsh-tool-describe-image': 'describe-image',
   'dsh-aionui-panel': null,
@@ -54,11 +56,20 @@ const NAMESPACE_ALIASES: Readonly<Record<string, string | null>> = {
  *   configurable (unknown name, or a package without a settings namespace).
  */
 export function resolveNamespaceEntry(entry: string): string | undefined {
+  return resolveNamespaceEntries(entry)[0]
+}
+
+/** Resolve one entry to every settings namespace owned by that package. */
+function resolveNamespaceEntries(entry: string): readonly string[] {
   const key = entry.trim()
-  if (key === '') return undefined
-  if (Object.hasOwn(NAMESPACE_ALIASES, key)) return NAMESPACE_ALIASES[key] ?? undefined
-  if ((FAMILY_NAMESPACES as readonly string[]).includes(key)) return key
-  return undefined
+  if (key === '') return []
+  if (Object.hasOwn(NAMESPACE_ALIASES, key)) {
+    const mapped = NAMESPACE_ALIASES[key]
+    if (mapped === null) return []
+    return typeof mapped === 'string' ? [mapped] : mapped
+  }
+  if ((FAMILY_NAMESPACES as readonly string[]).includes(key)) return [key]
+  return []
 }
 
 /**
@@ -74,8 +85,7 @@ export function composeAllowlist(userEntries: readonly string[], registered: rea
   const requested = userEntries.length === 0 ? (FAMILY_NAMESPACES as readonly string[]) : userEntries
   const resolved = new Set<string>()
   for (const entry of requested) {
-    const ns = resolveNamespaceEntry(entry)
-    if (ns !== undefined) resolved.add(ns)
+    for (const ns of resolveNamespaceEntries(entry)) resolved.add(ns)
   }
   const registeredSet = new Set(registered)
   return [...resolved].filter(ns => registeredSet.has(ns)).sort()

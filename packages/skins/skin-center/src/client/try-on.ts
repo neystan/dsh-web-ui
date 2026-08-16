@@ -156,14 +156,21 @@ interface ActiveVisuals {
   skin: SkinCenterEntry | null
   /** Attribute value before retraction (null = attribute absent). */
   bodyAttr: string | null
-  /** body inline style before retraction (null = none). */
-  bodyStyle: string | null
+  /** Only skin-owned backdrop properties; unrelated controller writes survive. */
+  backdrop: Map<string, { value: string; priority: string }>
   /** Skin chrome elements detached from body, re-inserted at their anchors. */
   detached: Array<{ el: HTMLElement; anchor: Node | null }>
   /** Neutralizes ghost backdrop writes while a try-on is live. */
   clearObserver: MutationObserver | null
   /** Hides global-rule leaks of the active skin (xp taskbar). */
   neutralizeStyle: HTMLStyleElement | null
+}
+
+/** Appearance controllers coordinate around a try-on surface transition. */
+export interface TryOnAppearanceLifecycle {
+  beforeSurfaceChange(): void
+  afterSurfaceChange(): void
+  afterExit(): void
 }
 
 /**
@@ -191,9 +198,14 @@ export class TryOnController {
    * route `/api/skin-center/bundle/<id>`; tests inject a stub.
    */
   private readonly loadBundle: (entry: SkinCenterEntry) => Promise<void>
+  private readonly appearance?: TryOnAppearanceLifecycle
 
-  constructor(options: { loadBundle?: (entry: SkinCenterEntry) => Promise<void> } = {}) {
+  constructor(options: {
+    loadBundle?: (entry: SkinCenterEntry) => Promise<void>
+    appearance?: TryOnAppearanceLifecycle
+  } = {}) {
     this.loadBundle = options.loadBundle ?? (entry => loadBundleScript(`${BUNDLE_ROUTE}/${encodeURIComponent(entry.id)}`))
+    this.appearance = options.appearance
   }
   /** The skin currently being tried on, if any. */
   get trying(): SkinCenterEntry | null {
@@ -211,12 +223,16 @@ export class TryOnController {
     this.exit()
     const epoch = ++this.epoch
 
+    this.appearance?.beforeSurfaceChange()
     const active: ActiveVisuals = this.captureAndRetractActive()
     let dispose: (() => void) | undefined
     try {
       dispose = await this.loadAndApply(entry)
     } catch (error) {
-      if (epoch === this.epoch) this.restoreActive(active)
+      if (epoch === this.epoch) {
+        this.restoreActive(active)
+        this.appearance?.afterExit()
+      }
       throw error
     }
     if (epoch !== this.epoch) {
@@ -228,6 +244,7 @@ export class TryOnController {
       return
     }
     this.session = { entry, dispose, active }
+    this.appearance?.afterSurfaceChange()
   }
 
   /**
@@ -239,8 +256,10 @@ export class TryOnController {
     if (activeSkinEntry() === null) return
     this.exit()
     this.epoch += 1
+    this.appearance?.beforeSurfaceChange()
     const active: ActiveVisuals = this.captureAndRetractActive()
     this.session = { entry: null, dispose: () => {}, active }
+    this.appearance?.afterSurfaceChange()
   }
 
   /** Exit the live session: dispose the tried-on skin, then restore the active skin. */
@@ -249,9 +268,11 @@ export class TryOnController {
     if (session === null) return
     this.epoch += 1
     this.session = null
+    this.appearance?.beforeSurfaceChange()
     session.dispose()
     if (session.entry !== null) this.cleanupModule(session.entry)
     this.restoreActive(session.active)
+    this.appearance?.afterExit()
   }
 
   /** Execute + materialize + mount the target skin through the real loader. */
@@ -308,7 +329,13 @@ export class TryOnController {
     const bodyAttr = skin === null ? null : body.getAttribute(skin.bodyAttr)
     if (skin !== null && bodyAttr !== null) body.removeAttribute(skin.bodyAttr)
 
-    const bodyStyle = body.getAttribute('style')
+    const backdrop = new Map<string, { value: string; priority: string }>()
+    for (const prop of BACKDROP_PROPS) {
+      backdrop.set(prop, {
+        value: body.style.getPropertyValue(prop),
+        priority: body.style.getPropertyPriority(prop),
+      })
+    }
     for (const prop of BACKDROP_PROPS) body.style.removeProperty(prop)
 
     // Detach only known skin chrome (marker/bodyAttr), leaving other
@@ -341,7 +368,7 @@ export class TryOnController {
     const neutralizeCss = skin === null ? undefined : NEUTRALIZE_CSS[skin.id]
     const neutralizeStyle = neutralizeCss === undefined ? null : this.injectStyle(neutralizeCss)
 
-    return { skin, bodyAttr, bodyStyle, detached, clearObserver, neutralizeStyle }
+    return { skin, bodyAttr, backdrop, detached, clearObserver, neutralizeStyle }
   }
 
   /** Restore the active skin's captured visual state. */
@@ -350,10 +377,9 @@ export class TryOnController {
     if (active.skin !== null && active.bodyAttr !== null) {
       body.setAttribute(active.skin.bodyAttr, active.bodyAttr)
     }
-    if (active.bodyStyle !== null) {
-      body.setAttribute('style', active.bodyStyle)
-    } else {
-      body.removeAttribute('style')
+    for (const [property, original] of active.backdrop) {
+      if (original.value === '') body.style.removeProperty(property)
+      else body.style.setProperty(property, original.value, original.priority)
     }
     for (const { el, anchor } of active.detached) {
       body.insertBefore(el, anchor !== null && anchor.parentNode === body ? anchor : null)

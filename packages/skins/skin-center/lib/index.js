@@ -1,9 +1,147 @@
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { installSettingsSection, settingsNamespace } from "@deepseek-ai/dsh-settings";
 import z from "schemastery";
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, rmdirSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve, sep } from "node:path";
+import { createHash, randomBytes } from "node:crypto";
+import { mkdir, readdir, realpath, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { chmodSync, createReadStream, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, rmdirSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
+//#region src/core/background.ts
+const BACKGROUND_REVISION = /^[a-f0-9]{64}$/;
+function ascii(bytes, start, length) {
+	return String.fromCharCode(...bytes.subarray(start, start + length));
+}
+function u16(bytes, offset) {
+	return bytes[offset] | bytes[offset + 1] << 8;
+}
+function u24(bytes, offset) {
+	return bytes[offset] | bytes[offset + 1] << 8 | bytes[offset + 2] << 16;
+}
+function u32(bytes, offset) {
+	return (bytes[offset] | bytes[offset + 1] << 8 | bytes[offset + 2] << 16 | bytes[offset + 3] << 24) >>> 0;
+}
+/** Inspect the first WebP image chunk without decoding image pixels. */
+function inspectWebP(bytes) {
+	if (bytes.length < 20 || ascii(bytes, 0, 4) !== "RIFF" || ascii(bytes, 8, 4) !== "WEBP") return void 0;
+	const declaredEnd = u32(bytes, 4) + 8;
+	if (declaredEnd > bytes.length || declaredEnd < 20) return void 0;
+	let offset = 12;
+	while (offset + 8 <= declaredEnd) {
+		const kind = ascii(bytes, offset, 4);
+		const size = u32(bytes, offset + 4);
+		const payload = offset + 8;
+		if (payload + size > declaredEnd) return void 0;
+		if (kind === "VP8X" && size >= 10) return {
+			width: u24(bytes, payload + 4) + 1,
+			height: u24(bytes, payload + 7) + 1
+		};
+		if (kind === "VP8L" && size >= 5 && bytes[payload] === 47) {
+			const bits = u32(bytes, payload + 1);
+			return {
+				width: (bits & 16383) + 1,
+				height: (bits >>> 14 & 16383) + 1
+			};
+		}
+		if (kind === "VP8 " && size >= 10 && bytes[payload + 3] === 157 && bytes[payload + 4] === 1 && bytes[payload + 5] === 42) return {
+			width: u16(bytes, payload + 6) & 16383,
+			height: u16(bytes, payload + 8) & 16383
+		};
+		offset = payload + size + size % 2;
+	}
+}
+//#endregion
+//#region src/background-store.ts
+/** Safe, content-addressed storage for normalized custom background WebP files. */
+const MAX_BYTES = 6 * 1024 * 1024;
+const MAX_EDGE = 2560;
+const MAX_PIXELS = 6553600;
+const TEMP_MAX_AGE_MS = 1440 * 60 * 1e3;
+function code(error) {
+	return typeof error === "object" && error !== null && "code" in error ? String(error.code) : void 0;
+}
+var BackgroundAssetStore = class {
+	root;
+	constructor(root) {
+		this.root = root;
+	}
+	async cleanupTempFiles(now = Date.now()) {
+		await mkdir(this.root, { recursive: true });
+		const entries = await readdir(this.root, { withFileTypes: true });
+		await Promise.all(entries.map(async (entry) => {
+			if (!entry.isFile() || !entry.name.startsWith(".tmp-")) return;
+			const path = join(this.root, entry.name);
+			try {
+				if (now - (await stat(path)).mtimeMs > TEMP_MAX_AGE_MS) await unlink(path);
+			} catch {}
+		}));
+	}
+	async save(source) {
+		const chunks = [];
+		let size = 0;
+		for await (const chunk of source) {
+			size += chunk.byteLength;
+			if (size > MAX_BYTES) throw new Error("image-too-large");
+			chunks.push(Buffer.from(chunk));
+		}
+		const bytes = Buffer.concat(chunks, size);
+		const dimensions = inspectWebP(bytes);
+		if (dimensions === void 0) throw new Error("invalid-webp");
+		if (dimensions.width < 1 || dimensions.height < 1 || dimensions.width > MAX_EDGE || dimensions.height > MAX_EDGE || dimensions.width * dimensions.height > MAX_PIXELS) throw new Error("invalid-image-dimensions");
+		await mkdir(this.root, { recursive: true });
+		const revision = createHash("sha256").update(bytes).digest("hex");
+		const target = join(this.root, `${revision}.webp`);
+		try {
+			await stat(target);
+			return { revision };
+		} catch {}
+		const temporary = join(this.root, `.tmp-${process.pid}-${randomBytes(8).toString("hex")}`);
+		try {
+			await writeFile(temporary, bytes, { flag: "wx" });
+			try {
+				await rename(temporary, target);
+			} catch (error) {
+				if (code(error) !== "EEXIST") throw error;
+				await unlink(temporary).catch(() => {});
+			}
+		} catch (error) {
+			await unlink(temporary).catch(() => {});
+			throw error;
+		}
+		return { revision };
+	}
+	async read(revision) {
+		if (!BACKGROUND_REVISION.test(revision)) return void 0;
+		await mkdir(this.root, { recursive: true });
+		const candidate = join(this.root, `${revision}.webp`);
+		try {
+			const [root, path] = await Promise.all([realpath(this.root), realpath(candidate)]);
+			const child = relative(root, path);
+			if (child === "" || child.startsWith("..") || isAbsolute(child)) return void 0;
+			const info = await stat(path);
+			return info.isFile() ? {
+				path,
+				size: info.size
+			} : void 0;
+		} catch {
+			return;
+		}
+	}
+	async delete(revision) {
+		const asset = await this.read(revision);
+		if (asset === void 0) return false;
+		try {
+			await unlink(asset.path);
+			return true;
+		} catch (error) {
+			if (code(error) === "ENOENT") return false;
+			throw error;
+		}
+	}
+};
+//#endregion
+//#region src/core/theme.ts
+const CUSTOM_THEME_NS = "skin-custom-theme";
+//#endregion
 //#region src/skin-switch.ts
 /**
 * In-process skin switching for the skin center — the official `dsh-skin use`
@@ -792,6 +930,24 @@ function requireSameOrigin(req, res) {
 	});
 	return false;
 }
+function isLoopbackRequest(req) {
+	const host = req.headers.host;
+	if (typeof host !== "string" || host === "") return false;
+	try {
+		const hostname = new URL(`http://${host}`).hostname.replace(/^\[|\]$/g, "").toLowerCase();
+		return hostname === "localhost" || hostname === "::1" || /^127(?:\.\d{1,3}){3}$/.test(hostname);
+	} catch {
+		return false;
+	}
+}
+function requireLoopback(req, res) {
+	if (isLoopbackRequest(req)) return true;
+	json(res, 403, {
+		ok: false,
+		error: "loopback-required"
+	});
+	return false;
+}
 /** Read a JSON request body (bounded). */
 function readJsonBody(req) {
 	return new Promise((resolve, reject) => {
@@ -972,6 +1128,134 @@ function bundleRoute() {
 		}
 	};
 }
+function backgroundUploadRoute(store) {
+	return {
+		kind: "exact",
+		path: `${SKIN_CENTER_API_PREFIX}/background`,
+		handler: async (req, res) => {
+			if (!requireMethod(req, res, "POST")) return;
+			if (!requireSameOrigin(req, res) || !requireLoopback(req, res)) return;
+			if ((req.headers["content-type"] ?? "").split(";", 1)[0].trim().toLowerCase() !== "image/webp") {
+				json(res, 415, {
+					ok: false,
+					error: "unsupported-image-type"
+				});
+				return;
+			}
+			if (store === void 0) {
+				json(res, 503, {
+					ok: false,
+					error: "background-storage-unavailable"
+				});
+				return;
+			}
+			try {
+				json(res, 200, {
+					ok: true,
+					...await store.save(req)
+				});
+			} catch (error) {
+				const message = error instanceof Error ? error.message : "";
+				if (message === "image-too-large") json(res, 413, {
+					ok: false,
+					error: message
+				});
+				else if (message === "invalid-webp" || message === "invalid-image-dimensions") json(res, 400, {
+					ok: false,
+					error: message
+				});
+				else json(res, 500, {
+					ok: false,
+					error: "background-storage-failed"
+				});
+			}
+		}
+	};
+}
+function backgroundAssetRoute(store) {
+	const prefix = `${SKIN_CENTER_API_PREFIX}/background`;
+	return {
+		kind: "prefix",
+		path: prefix,
+		handler: async (req, res) => {
+			if (req.method !== "GET" && req.method !== "DELETE") {
+				json(res, 405, {
+					ok: false,
+					error: "method-not-allowed"
+				});
+				return;
+			}
+			if (!requireSameOrigin(req, res)) return;
+			if (req.method === "DELETE" && !requireLoopback(req, res)) return;
+			if (store === void 0) {
+				json(res, 503, {
+					ok: false,
+					error: "background-storage-unavailable"
+				});
+				return;
+			}
+			let filename;
+			try {
+				filename = decodeURIComponent(new URL(req.url ?? "/", "http://x").pathname.slice(prefix.length + 1));
+			} catch {
+				json(res, 400, {
+					ok: false,
+					error: "invalid-background-revision"
+				});
+				return;
+			}
+			const match = /^([a-f0-9]{64})\.webp$/.exec(filename);
+			if (match === null) {
+				json(res, 400, {
+					ok: false,
+					error: "invalid-background-revision"
+				});
+				return;
+			}
+			const revision = match[1];
+			if (req.method === "DELETE") {
+				try {
+					json(res, 200, {
+						ok: true,
+						deleted: await store.delete(revision)
+					});
+				} catch {
+					json(res, 500, {
+						ok: false,
+						error: "background-storage-failed"
+					});
+				}
+				return;
+			}
+			const asset = await store.read(revision);
+			if (asset === void 0) {
+				json(res, 404, {
+					ok: false,
+					error: "background-not-found"
+				});
+				return;
+			}
+			res.writeHead(200, {
+				"content-type": "image/webp",
+				"content-length": String(asset.size),
+				"cache-control": "private, max-age=31536000, immutable"
+			});
+			await new Promise((resolve) => {
+				const stream = createReadStream(asset.path);
+				stream.on("error", () => {
+					if (!res.headersSent) json(res, 500, {
+						ok: false,
+						error: "background-read-failed"
+					});
+					else res.destroy();
+					resolve();
+				});
+				stream.on("end", resolve);
+				stream.pipe(res);
+			});
+		}
+	};
+}
 /**
 * Build the skin-center route family.
 * @param deps - optional runner override (tests).
@@ -1004,6 +1288,8 @@ function makeSkinCenterRoutes(deps = {}) {
 			active: await current()
 		})),
 		bundleRoute(),
+		backgroundUploadRoute(deps.backgrounds),
+		backgroundAssetRoute(deps.backgrounds),
 		postRoute(`${SKIN_CENTER_API_PREFIX}/apply`, async (body) => {
 			const official = body.official === true;
 			const skin = body.skin;
@@ -1032,8 +1318,32 @@ const inject = ["webServer"];
 * scope without depending on this Host package.
 */
 const SKIN_BACKGROUND_NAMESPACE = settingsNamespace("skin-background");
+/** Settings namespace for the compact official-default theme editor. */
+const CUSTOM_THEME_NAMESPACE = settingsNamespace(CUSTOM_THEME_NS);
+const PaletteConfigSchema = z.object({
+	accent: z.string().pattern(/^#[0-9A-F]{6}$/),
+	background: z.string().pattern(/^#[0-9A-F]{6}$/),
+	foreground: z.string().pattern(/^#[0-9A-F]{6}$/),
+	contrast: z.number().min(0).max(100).step(1)
+});
+/** Runtime schema for the independently selectable custom theme. */
+const CustomThemeConfigSchema = z.object({
+	version: z.number().min(1).max(2).step(1).default(2),
+	active: z.boolean().default(false),
+	light: z.union([PaletteConfigSchema, z.const(void 0)]),
+	dark: z.union([PaletteConfigSchema, z.const(void 0)])
+});
 /** Runtime schema for SkinBackgroundConfig. */
-const SkinBackgroundConfigSchema = z.object({ backgroundOpacity: z.number().min(0).max(100).step(5).default(0) });
+const SkinBackgroundConfigSchema = z.object({
+	version: z.number().min(1).max(1).step(1).default(1),
+	mode: z.union([
+		z.const("skin"),
+		z.const("custom"),
+		z.const("none")
+	]).default("skin"),
+	backgroundOpacity: z.number().min(0).max(100).step(5).default(0),
+	imageRevision: z.union([z.string().pattern(/^[a-f0-9]{64}$/), z.const(void 0)])
+});
 /**
 * Register the skin-center API routes.
 *
@@ -1047,7 +1357,20 @@ function apply(ctx) {
 		setSource: () => {},
 		onChange: () => {}
 	});
-	const routes = makeSkinCenterRoutes();
+	installSettingsSection(ctx, CUSTOM_THEME_NAMESPACE, CustomThemeConfigSchema, {}, {
+		setSource: () => {},
+		onChange: () => {}
+	});
+	let backgrounds;
+	try {
+		backgrounds = new BackgroundAssetStore(join(dirname(resolvePaths().patchPath), "skin-center", "assets"));
+		backgrounds.cleanupTempFiles().catch(() => {
+			console.error("[ui-skin-center] background temp cleanup failed");
+		});
+	} catch {
+		console.error("[ui-skin-center] background storage unavailable");
+	}
+	const routes = makeSkinCenterRoutes({ backgrounds });
 	try {
 		ctx.effect(() => {
 			const disposers = [];
@@ -1066,4 +1389,4 @@ function apply(ctx) {
 	}
 }
 //#endregion
-export { SKIN_BACKGROUND_NAMESPACE, SKIN_CENTER_API_PREFIX, SkinBackgroundConfigSchema, apply, inject, makeSkinCenterRoutes, name };
+export { CUSTOM_THEME_NAMESPACE, CustomThemeConfigSchema, SKIN_BACKGROUND_NAMESPACE, SKIN_CENTER_API_PREFIX, SkinBackgroundConfigSchema, apply, inject, makeSkinCenterRoutes, name };

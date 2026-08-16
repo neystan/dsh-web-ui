@@ -18,10 +18,11 @@
  * @module @linxin666/dsh-client-ui-skin-center/routes
  */
 
-import { readFileSync, statSync } from 'node:fs'
+import { createReadStream, readFileSync, statSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { join as joinPath } from 'node:path'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
+import { BackgroundAssetStore } from './background-store.ts'
 import { currentSkin, useSkin, SKINS_DIR, listSkinDirCandidates, resolvePaths } from './skin-switch.ts'
 
 /** Browser-facing base path of the skin-center API. */
@@ -68,6 +69,23 @@ function isSameOriginRequest(req: IncomingMessage): boolean {
 function requireSameOrigin(req: IncomingMessage, res: ServerResponse): boolean {
   if (isSameOriginRequest(req)) return true
   json(res, 403, { ok: false, error: 'cross-site-request-rejected' })
+  return false
+}
+
+function isLoopbackRequest(req: IncomingMessage): boolean {
+  const host = req.headers.host
+  if (typeof host !== 'string' || host === '') return false
+  try {
+    const hostname = new URL(`http://${host}`).hostname.replace(/^\[|\]$/g, '').toLowerCase()
+    return hostname === 'localhost' || hostname === '::1' || /^127(?:\.\d{1,3}){3}$/.test(hostname)
+  } catch {
+    return false
+  }
+}
+
+function requireLoopback(req: IncomingMessage, res: ServerResponse): boolean {
+  if (isLoopbackRequest(req)) return true
+  json(res, 403, { ok: false, error: 'loopback-required' })
   return false
 }
 
@@ -162,6 +180,8 @@ function postRoute(path: string, run: (body: Record<string, unknown>) => Promise
 export interface SkinCenterRoutesDeps {
   /** Run `['use', <name>]` / `['current']`, resolving the CLI-equivalent stdout. */
   run?: (args: string[]) => Promise<string>
+  /** Content-addressed custom-background storage. */
+  backgrounds?: BackgroundAssetStore
 }
 
 /**
@@ -247,6 +267,98 @@ function bundleRoute(): WebRoute {
   }
 }
 
+function backgroundUploadRoute(store?: BackgroundAssetStore): WebRoute {
+  return {
+    kind: 'exact',
+    path: `${SKIN_CENTER_API_PREFIX}/background`,
+    handler: async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+      if (!requireMethod(req, res, 'POST')) return
+      if (!requireSameOrigin(req, res) || !requireLoopback(req, res)) return
+      if ((req.headers['content-type'] ?? '').split(';', 1)[0].trim().toLowerCase() !== 'image/webp') {
+        json(res, 415, { ok: false, error: 'unsupported-image-type' })
+        return
+      }
+      if (store === undefined) {
+        json(res, 503, { ok: false, error: 'background-storage-unavailable' })
+        return
+      }
+      try {
+        const result = await store.save(req)
+        json(res, 200, { ok: true, ...result })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : ''
+        if (message === 'image-too-large') json(res, 413, { ok: false, error: message })
+        else if (message === 'invalid-webp' || message === 'invalid-image-dimensions') {
+          json(res, 400, { ok: false, error: message })
+        } else {
+          json(res, 500, { ok: false, error: 'background-storage-failed' })
+        }
+      }
+    },
+  }
+}
+
+function backgroundAssetRoute(store?: BackgroundAssetStore): WebRoute {
+  const prefix = `${SKIN_CENTER_API_PREFIX}/background`
+  return {
+    kind: 'prefix',
+    path: prefix,
+    handler: async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+      if (req.method !== 'GET' && req.method !== 'DELETE') {
+        json(res, 405, { ok: false, error: 'method-not-allowed' })
+        return
+      }
+      if (!requireSameOrigin(req, res)) return
+      if (req.method === 'DELETE' && !requireLoopback(req, res)) return
+      if (store === undefined) {
+        json(res, 503, { ok: false, error: 'background-storage-unavailable' })
+        return
+      }
+      let filename: string
+      try {
+        filename = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname.slice(prefix.length + 1))
+      } catch {
+        json(res, 400, { ok: false, error: 'invalid-background-revision' })
+        return
+      }
+      const match = /^([a-f0-9]{64})\.webp$/.exec(filename)
+      if (match === null) {
+        json(res, 400, { ok: false, error: 'invalid-background-revision' })
+        return
+      }
+      const revision = match[1]
+      if (req.method === 'DELETE') {
+        try {
+          json(res, 200, { ok: true, deleted: await store.delete(revision) })
+        } catch {
+          json(res, 500, { ok: false, error: 'background-storage-failed' })
+        }
+        return
+      }
+      const asset = await store.read(revision)
+      if (asset === undefined) {
+        json(res, 404, { ok: false, error: 'background-not-found' })
+        return
+      }
+      res.writeHead(200, {
+        'content-type': 'image/webp',
+        'content-length': String(asset.size),
+        'cache-control': 'private, max-age=31536000, immutable',
+      })
+      await new Promise<void>((resolve) => {
+        const stream = createReadStream(asset.path)
+        stream.on('error', () => {
+          if (!res.headersSent) json(res, 500, { ok: false, error: 'background-read-failed' })
+          else res.destroy()
+          resolve()
+        })
+        stream.on('end', resolve)
+        stream.pipe(res)
+      })
+    },
+  }
+}
+
 /**
  * Build the skin-center route family.
  * @param deps - optional runner override (tests).
@@ -279,6 +391,8 @@ export function makeSkinCenterRoutes(deps: SkinCenterRoutesDeps = {}): WebRoute[
       active: await current(),
     })),
     bundleRoute(),
+    backgroundUploadRoute(deps.backgrounds),
+    backgroundAssetRoute(deps.backgrounds),
     postRoute(`${SKIN_CENTER_API_PREFIX}/apply`, async (body) => {
       const official = body.official === true
       const skin = body.skin

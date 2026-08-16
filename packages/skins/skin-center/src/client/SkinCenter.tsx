@@ -11,33 +11,91 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
+import {
+  CUSTOM_THEME_ID,
+  OFFICIAL_THEME_ID,
+  OFFICIAL_THEME_PRESETS,
+  resolveActiveThemeId,
+  themeApplyTarget,
+  type ThemeMode,
+} from '../core/theme.ts'
 import { SKIN_CENTER_ENTRIES, type SkinCenterEntry } from './generated/skins.ts'
 import { manifestHasSkin } from './manifest.ts'
-import type { SkinBackgroundHandle } from './background.ts'
+import type { BackgroundHandle } from './background.ts'
+import type { CustomThemeHandle } from './custom-theme.ts'
+import { BackgroundEditor } from './BackgroundEditor.tsx'
+import { CustomThemeEditor } from './CustomThemeEditor.tsx'
 import { activeSkinEntry, TryOnController } from './try-on.ts'
 import css from './skin-center.module.css'
 
 /** Business face the skin-center apply() injects into the card. */
 export interface SkinCenterInjected {
   controller: TryOnController
+  customTheme: CustomThemeHandle
   theme: {
     getTheme(): ThemeSnapshot
     subscribe(listener: () => void): () => void
     setTheme(id: 'light' | 'dark'): void
   }
-  /** Background occluder over the shared skin-background namespace. */
-  background: SkinBackgroundHandle
+  background: BackgroundHandle
 }
 
 /** Plugin-card component props: group-item runtime share + locale seat + injected face. */
 export type SkinCenterComponentProps =
   PropsRuntime<'web-ui.plugin.item'> & PropsLocale<'skinCenter'> & SkinCenterInjected
 
-/** The apply target of the official stock-look card. */
-const OFFICIAL = 'official'
+/** Bring the editor into view without scrolling the settings dialog header away. */
+export function revealThemeEditor(root: Document = document): void {
+  const title = root.getElementById('skin-center-theme-title')
+  title?.scrollIntoView({ block: 'nearest' })
+  title?.focus({ preventScroll: true })
+}
 
-/** Skin ids that read the background-scrim variable and paint a backdrop. */
-const BACKDROP_SKIN_IDS = new Set(['blue-fantasy', 'whale-song'])
+export type AppearanceSection = 'skins' | 'theme' | 'background'
+
+/** Keep customization compact while preserving background controls for every skin. */
+export function appearanceSections(editingTheme: boolean): readonly AppearanceSection[] {
+  return editingTheme ? ['theme'] : ['skins', 'background']
+}
+
+/** The visible theme count excludes the separate official stock entry. */
+export function skinThemeCount(installedCount: number): number {
+  return installedCount + 1
+}
+
+/** Translate a card identity into the existing host API and confirmation target. */
+export function applyRequestFor(themeId: string): {
+  body: { official: true } | { skin: string }
+  confirmationTarget: string
+} {
+  const { hostTarget } = themeApplyTarget(themeId)
+  return {
+    body: hostTarget === OFFICIAL_THEME_ID ? { official: true } : { skin: hostTarget },
+    confirmationTarget: hostTarget,
+  }
+}
+
+/** Enter custom try-on through the same official-surface session used by stock preview. */
+export function beginCustomTryOn(
+  controller: Pick<TryOnController, 'tryOnOfficial'>,
+  theme: Pick<CustomThemeHandle, 'startTrial'>,
+  mode: ThemeMode,
+): void {
+  controller.tryOnOfficial()
+  theme.startTrial(mode)
+}
+
+/** End custom-only state before the shared controller restores the previous surface. */
+export function finishTryOn(
+  controller: Pick<TryOnController, 'exit'>,
+  theme: Pick<CustomThemeHandle, 'endTrial' | 'setOfficialActive'>,
+  custom: boolean,
+  restoreOfficialSurface: boolean,
+): void {
+  if (custom) theme.endTrial()
+  theme.setOfficialActive(restoreOfficialSurface)
+  controller.exit()
+}
 
 /**
  * Render the skin-center card: a disclosure header naming the plugin, with
@@ -46,17 +104,21 @@ const BACKDROP_SKIN_IDS = new Set(['blue-fantasy', 'whale-song'])
  * @param props - card props.
  * @returns the plugin card.
  */
-export function SkinCenter({ t, controller, theme, background }: SkinCenterComponentProps) {
+export function SkinCenter({ t, controller, customTheme, theme, background }: SkinCenterComponentProps) {
   const snapshot = useSyncExternalStore(theme.subscribe, theme.getTheme)
-  const opacity = useSyncExternalStore(background.subscribe, background.opacity)
-  const activePackage = activeSkinEntry()?.package
-  const activeId = activeSkinEntry()?.id
-  const backdropActive = activeId !== undefined && BACKDROP_SKIN_IDS.has(activeId)
+  const customSnapshot = useSyncExternalStore(customTheme.subscribe.bind(customTheme), customTheme.getSnapshot.bind(customTheme))
+  const activeEntry = activeSkinEntry()
+  const activePackage = activeEntry?.package
+  const activeId = resolveActiveThemeId(activeEntry?.id, customSnapshot.settings.active)
   const [open, setOpen] = useState(false)
   const [tryingId, setTryingId] = useState<string | null>(null)
-  const [tryingOfficial, setTryingOfficial] = useState(false)
   const [applying, setApplying] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editingTheme, setEditingTheme] = useState(false)
+  const [editingStartedTrial, setEditingStartedTrial] = useState(false)
+  const restoreMode = useRef<ThemeMode>('light')
+  const themeMode: ThemeMode = snapshot.active.colorScheme === 'dark' ? 'dark' : 'light'
+  const sections = appearanceSections(editingTheme)
   // Unmount guard for the confirmation poll: once the card is gone, the
   // pending timers must stop and no reload / setState may fire.
   const mounted = useRef(false)
@@ -64,40 +126,61 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
     mounted.current = true
     return () => { mounted.current = false }
   }, [])
+  useEffect(() => {
+    const officialSurface = tryingId === OFFICIAL_THEME_ID
+      || tryingId === CUSTOM_THEME_ID
+      || (tryingId === null && activePackage === undefined)
+    customTheme.setOfficialActive(officialSurface)
+    if (officialSurface && tryingId !== OFFICIAL_THEME_ID) customTheme.resume()
+    else customTheme.suspend()
+  }, [activePackage, tryingId, customTheme])
 
   const tryOn = (entry: SkinCenterEntry): void => {
     setError(null)
+    if (tryingId === CUSTOM_THEME_ID) customTheme.endTrial()
     void controller.tryOn(entry)
       .then(() => {
         setTryingId(entry.id)
-        setTryingOfficial(false)
       })
       .catch(() => {
         // The controller may have torn down a previous session before the
         // load failed; reset both flags so no stale "trying on" lingers.
         setError(t('tryOnError'))
         setTryingId(null)
-        setTryingOfficial(false)
       })
   }
 
   const tryOnOfficial = (): void => {
     setError(null)
     try {
+      if (tryingId === CUSTOM_THEME_ID) customTheme.endTrial()
       controller.tryOnOfficial()
     } catch {
       setError(t('tryOnError'))
-      setTryingOfficial(false)
       return
     }
-    setTryingId(null)
-    setTryingOfficial(true)
+    setTryingId(OFFICIAL_THEME_ID)
+  }
+
+  const tryOnCustom = (): void => {
+    setError(null)
+    try {
+      beginCustomTryOn(controller, customTheme, themeMode)
+    } catch {
+      setError(t('tryOnError'))
+      return
+    }
+    setTryingId(CUSTOM_THEME_ID)
   }
 
   const exitTryOn = (): void => {
-    controller.exit()
+    finishTryOn(
+      controller,
+      customTheme,
+      tryingId === CUSTOM_THEME_ID,
+      activePackage === undefined,
+    )
     setTryingId(null)
-    setTryingOfficial(false)
   }
 
   /**
@@ -108,7 +191,7 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
    */
   const confirmActive = (target: string): Promise<boolean> =>
     new Promise(resolve => {
-      const expected = target === OFFICIAL ? 'none' : target
+      const expected = target === OFFICIAL_THEME_ID ? 'none' : target
       let tries = 0
       const tick = (): void => {
         if (!mounted.current) {
@@ -144,7 +227,7 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
    */
   const manifestReady = (target: string): Promise<boolean> =>
     new Promise(resolve => {
-      const expected = target === OFFICIAL ? null : target
+      const expected = target === OFFICIAL_THEME_ID ? null : target
       let tries = 0
       const tick = (): void => {
         if (!mounted.current) {
@@ -181,48 +264,82 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
   const applySkin = (target: string): void => {
     setError(null)
     setApplying(target)
-    const body = target === OFFICIAL ? { official: true } : { skin: target }
-    void fetch('/api/skin-center/apply', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-      .then(async response => {
+    const selection = themeApplyTarget(target)
+    const request = applyRequestFor(target)
+    const previousCustomActive = customTheme.getSnapshot().settings.active
+    const command = selection.hostTarget === OFFICIAL_THEME_ID
+      ? 'dsh-skin use official'
+      : `dsh-skin use ${selection.hostTarget}`
+    void (async () => {
+      let hostWriteStarted = false
+      try {
+        await customTheme.setActive(selection.customActive)
+        const response = await fetch('/api/skin-center/apply', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(request.body),
+        })
         const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
         if (!response.ok || payload?.ok !== true) {
           throw new Error(payload?.error ?? `HTTP ${response.status}`)
         }
-        setApplying(null)
+        hostWriteStarted = true
         // Patch written; reload only once the watcher reports the target
         // active AND the boot manifest caught up, so the page never boots
         // into the old skin.
-        void confirmActive(target).then(confirmed => {
-          if (!mounted.current) return
-          if (!confirmed) {
-            const command = target === OFFICIAL ? 'dsh-skin use official' : `dsh-skin use ${target}`
-            setError(`${t('appliedUnconfirmed')} — ${command}`)
-            return
-          }
-          void manifestReady(target).then(ready => {
-            if (!mounted.current) return
-            if (ready) {
-              window.location.reload()
-            } else {
-              const command = target === OFFICIAL ? 'dsh-skin use official' : `dsh-skin use ${target}`
-              setError(`${t('appliedUnconfirmed')} — ${command}`)
-            }
-          })
-        })
-      })
-      .catch((cause: unknown) => {
+        const confirmed = await confirmActive(request.confirmationTarget)
+        if (!mounted.current) return
+        if (!confirmed) {
+          setApplying(null)
+          setError(`${t('appliedUnconfirmed')} — ${command}`)
+          return
+        }
+        const ready = await manifestReady(request.confirmationTarget)
+        if (!mounted.current) return
+        if (ready) {
+          window.location.reload()
+          return
+        }
+        setApplying(null)
+        setError(`${t('appliedUnconfirmed')} — ${command}`)
+      } catch (cause: unknown) {
+        if (!hostWriteStarted) {
+          await customTheme.setActive(previousCustomActive).catch(() => {})
+        }
+        if (!mounted.current) return
         setApplying(null)
         const detail = cause instanceof Error ? cause.message : String(cause)
-        const command = target === OFFICIAL ? 'dsh-skin use official' : `dsh-skin use ${target}`
         setError(`${t('applyFailed')} (${detail}) — ${command}`)
-      })
+      }
+    })()
   }
 
-  const dark = snapshot.active.colorScheme === 'dark'
+  const openThemeEditor = (): void => {
+    restoreMode.current = themeMode
+    const startsTrial = activeId !== CUSTOM_THEME_ID
+    setEditingStartedTrial(startsTrial)
+    if (startsTrial) tryOnCustom()
+    setEditingTheme(true)
+    window.setTimeout(() => {
+      revealThemeEditor()
+    }, 0)
+  }
+
+  const cancelThemeEditor = (): void => {
+    customTheme.preview(themeMode)
+    if (editingStartedTrial) {
+      exitTryOn()
+    }
+    theme.setTheme(restoreMode.current)
+    setEditingTheme(false)
+    setEditingStartedTrial(false)
+  }
+
+  const saveThemeAndApply = (): void => {
+    setEditingTheme(false)
+    setEditingStartedTrial(false)
+    applySkin(CUSTOM_THEME_ID)
+  }
 
   /** One row: try-on control + apply button. Shared by the official card and every skin card. */
   const actionButtons = (opts: {
@@ -231,6 +348,8 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
     isTrying: boolean
     onTryOn: () => void
     applyLabel: string
+    onApply?: () => void
+    extra?: ReactNode
   }): ReactNode => (
     <div className={css.actions}>
       {opts.isActive ? (
@@ -250,10 +369,11 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
         type="button"
         className={css.button}
         disabled={applying !== null}
-        onClick={() => { applySkin(opts.key) }}
+        onClick={opts.onApply ?? (() => { applySkin(opts.key) })}
       >
         {applying === opts.key ? t('applying') : opts.applyLabel}
       </button>
+      {opts.extra}
     </div>
   )
 
@@ -269,7 +389,7 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
         <span className={css.headText}>
           <span className={css.pluginName}>
             {t('title')}
-            <span className={css.titleBadge}>{String(SKIN_CENTER_ENTRIES.length)}</span>
+            <span className={css.titleBadge}>{String(skinThemeCount(SKIN_CENTER_ENTRIES.length))}</span>
           </span>
           <span className={css.cardDescription} title={t('cardDescription')}>{t('cardDescription')}</span>
         </span>
@@ -293,56 +413,18 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
           <div className={css.cardBody}>
             <div className={css.head}>
               <div className={css.intro} title={t('intro')}>{t('intro')}</div>
-              <div className={css.themeRow}>
-                <span className={css.themeLabel}>{t('theme')}</span>
-                <button
-                  type="button"
-                  className={`${css.themeButton} ${dark ? '' : css.themeButtonActive}`}
-                  onClick={() => { theme.setTheme('light') }}
-                >
-                  {t('themeLight')}
-                </button>
-                <button
-                  type="button"
-                  className={`${css.themeButton} ${dark ? css.themeButtonActive : ''}`}
-                  onClick={() => { theme.setTheme('dark') }}
-                >
-                  {t('themeDark')}
-                </button>
-              </div>
-            </div>
-
-            <div className={css.backgroundRow}>
-              <div className={css.backgroundHead}>
-                <span className={css.backgroundLabel}>{t('backgroundOpacity')}</span>
-                <span className={css.backgroundValue} aria-hidden="true">{opacity}%</span>
-              </div>
-              <input
-                id="skin-center-background-opacity"
-                className={css.backgroundRange}
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={opacity}
-                aria-valuetext={`${opacity}%`}
-                aria-label={t('backgroundOpacity')}
-                onChange={(event) => { background.set(Number(event.target.value)) }}
-              />
-              <p className={backdropActive ? css.backgroundHint : css.backgroundHintMuted}>
-                {backdropActive ? t('backgroundHint') : t('backgroundHintInert')}
-              </p>
             </div>
 
             {error !== null && <div className={css.error}>{error}</div>}
 
-            <div className={css.list}>
+            {sections.includes('skins') && (
+              <div className={css.list}>
               {(() => {
-                const isActive = activePackage === undefined
-                const isTrying = tryingOfficial
+                const isActive = activeId === OFFICIAL_THEME_ID
+                const isTrying = tryingId === OFFICIAL_THEME_ID
                 const badge = isActive ? t('active') : isTrying ? t('tryingOn') : null
                 return (
-                  <div className={css.card} key={OFFICIAL}>
+                  <div className={css.card} key={OFFICIAL_THEME_ID}>
                     <div className={css.cardHead}>
                       <span className={css.swatch} style={{ background: '#98a1ab' }} aria-hidden="true" />
                       <span className={css.cardName} title={t('official')}>{t('official')}</span>
@@ -354,7 +436,7 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
                     </div>
                     <div className={css.cardTagline} title={t('officialTagline')}>{t('officialTagline')}</div>
                     {actionButtons({
-                      key: OFFICIAL,
+                      key: OFFICIAL_THEME_ID,
                       isActive,
                       isTrying,
                       onTryOn: tryOnOfficial,
@@ -364,8 +446,41 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
                 )
               })()}
 
+              {(() => {
+                const isActive = activeId === CUSTOM_THEME_ID
+                const isTrying = tryingId === CUSTOM_THEME_ID
+                const badge = isActive ? t('active') : isTrying ? t('tryingOn') : null
+                const accent = customSnapshot.settings[themeMode]?.accent ?? OFFICIAL_THEME_PRESETS[themeMode].accent
+                return (
+                  <div className={css.card} key={CUSTOM_THEME_ID}>
+                    <div className={css.cardHead}>
+                      <span className={css.swatch} style={{ background: accent }} aria-hidden="true" />
+                      <span className={css.cardName} title={t('customTheme')}>{t('customTheme')}</span>
+                      {badge !== null && (
+                        <span className={`${css.badge} ${isActive ? css.badgeActive : css.badgeTrying}`}>
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className={css.cardTagline} title={t('customThemeTagline')}>{t('customThemeTagline')}</div>
+                    {actionButtons({
+                      key: CUSTOM_THEME_ID,
+                      isActive,
+                      isTrying,
+                      onTryOn: tryOnCustom,
+                      applyLabel: t('apply'),
+                      extra: (
+                        <button type="button" className={css.button} onClick={openThemeEditor}>
+                          {t('edit')}
+                        </button>
+                      ),
+                    })}
+                  </div>
+                )
+              })()}
+
               {SKIN_CENTER_ENTRIES.map(entry => {
-                const isActive = entry.package === activePackage
+                const isActive = entry.id === activeId
                 const isTrying = entry.id === tryingId
                 const badge = isActive ? t('active') : isTrying ? t('tryingOn') : null
                 return (
@@ -390,7 +505,20 @@ export function SkinCenter({ t, controller, theme, background }: SkinCenterCompo
                   </div>
                 )
               })}
-            </div>
+              </div>
+            )}
+            {sections.includes('theme') && (
+              <CustomThemeEditor
+                handle={customTheme}
+                mode={themeMode}
+                setMode={mode => { theme.setTheme(mode) }}
+                onCancel={cancelThemeEditor}
+                onSaveAndApply={saveThemeAndApply}
+                backgroundEditor={<BackgroundEditor handle={background} t={t} />}
+                t={t}
+              />
+            )}
+            {sections.includes('background') && <BackgroundEditor handle={background} t={t} />}
           </div>
         )
         : null}

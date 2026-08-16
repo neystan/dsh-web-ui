@@ -25,5 +25,5 @@
     "light": "packages/skins/harbor/preview/light.png",
     "dark": "packages/skins/harbor/preview/dark.png"
   },
-  "order": 10
+  "order": 3
 }

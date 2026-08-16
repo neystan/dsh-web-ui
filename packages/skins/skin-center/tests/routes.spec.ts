@@ -5,11 +5,15 @@
  * error path. Mirrors the family route-test pattern.
  */
 import { createServer, request as httpRequest } from 'node:http'
+import { mkdtemp } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
 import { makeSkinCenterRoutes, SKIN_CENTER_API_PREFIX } from '../src/routes.ts'
+import { BackgroundAssetStore } from '../src/background-store.ts'
 
 /** One stubbed CLI invocation: the args received and the stdout to return. */
 interface StubStep {
@@ -72,8 +76,8 @@ async function call(
   port: number,
   method: string,
   path: string,
-  opts: { body?: unknown; rawBody?: string; headers?: Record<string, string> } = {},
-): Promise<{ status: number; body: Record<string, unknown>; raw?: string }> {
+  opts: { body?: unknown; rawBody?: string | Buffer; headers?: Record<string, string> } = {},
+): Promise<{ status: number; body: Record<string, unknown>; raw: string; bytes: Buffer; headers: Record<string, string | string[] | undefined> }> {
   return await new Promise((resolve, reject) => {
     const headers: Record<string, string> = { ...opts.headers }
     if (opts.rawBody !== undefined) {
@@ -91,7 +95,7 @@ async function call(
           const raw = Buffer.concat(chunks).toString('utf8')
           let body: Record<string, unknown> = {}
           try { body = JSON.parse(raw) as Record<string, unknown> } catch { /* empty body */ }
-          resolve({ status: response.statusCode ?? 0, body, raw })
+          resolve({ status: response.statusCode ?? 0, body, raw, bytes: Buffer.concat(chunks), headers: response.headers })
         })
       },
     )
@@ -102,7 +106,66 @@ async function call(
   })
 }
 
+function backgroundWebP(width = 1200, height = 800): Buffer {
+  const bytes = Buffer.alloc(30)
+  bytes.write('RIFF', 0, 'ascii')
+  bytes.writeUInt32LE(22, 4)
+  bytes.write('WEBPVP8X', 8, 'ascii')
+  bytes.writeUInt32LE(10, 16)
+  bytes.writeUIntLE(width - 1, 24, 3)
+  bytes.writeUIntLE(height - 1, 27, 3)
+  return bytes
+}
+
 describe('skin-center routes', () => {
+  it('uploads, serves, and deletes a normalized background WebP', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'skin-center-routes-'))
+    const backgrounds = new BackgroundAssetStore(root)
+    const server = await serve(makeSkinCenterRoutes({ run: stubRunner([]).run, backgrounds }))
+    const image = backgroundWebP()
+    const upload = await call(server.port, 'POST', `${SKIN_CENTER_API_PREFIX}/background`, {
+      rawBody: image,
+      headers: { 'content-type': 'image/webp' },
+    })
+    const revision = String(upload.body.revision)
+    const fetched = await call(server.port, 'GET', `${SKIN_CENTER_API_PREFIX}/background/${revision}.webp`)
+    const removed = await call(server.port, 'DELETE', `${SKIN_CENTER_API_PREFIX}/background/${revision}.webp`)
+    const missing = await call(server.port, 'GET', `${SKIN_CENTER_API_PREFIX}/background/${revision}.webp`)
+    await server.close()
+
+    expect(upload.status).toBe(200)
+    expect(upload.body).toEqual({ ok: true, revision })
+    expect(revision).toMatch(/^[a-f0-9]{64}$/)
+    expect(fetched.status).toBe(200)
+    expect(fetched.bytes).toEqual(image)
+    expect(fetched.headers['content-type']).toBe('image/webp')
+    expect(fetched.headers['cache-control']).toBe('private, max-age=31536000, immutable')
+    expect(removed.body).toEqual({ ok: true, deleted: true })
+    expect(missing.status).toBe(404)
+  })
+
+  it('fences invalid background uploads without leaking host details', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'skin-center-routes-'))
+    const backgrounds = new BackgroundAssetStore(root)
+    const server = await serve(makeSkinCenterRoutes({ run: stubRunner([]).run, backgrounds }))
+    const wrongType = await call(server.port, 'POST', `${SKIN_CENTER_API_PREFIX}/background`, {
+      rawBody: backgroundWebP(),
+      headers: { 'content-type': 'image/png' },
+    })
+    const remoteHost = await call(server.port, 'POST', `${SKIN_CENTER_API_PREFIX}/background`, {
+      rawBody: backgroundWebP(),
+      headers: { 'content-type': 'image/webp', host: 'example.com' },
+    })
+    const malformed = await call(server.port, 'POST', `${SKIN_CENTER_API_PREFIX}/background`, {
+      rawBody: Buffer.from('bad'),
+      headers: { 'content-type': 'image/webp' },
+    })
+    await server.close()
+    expect(wrongType).toMatchObject({ status: 415, body: { ok: false, error: 'unsupported-image-type' } })
+    expect(remoteHost).toMatchObject({ status: 403, body: { ok: false, error: 'loopback-required' } })
+    expect(malformed).toMatchObject({ status: 400, body: { ok: false, error: 'invalid-webp' } })
+  })
+
   it('GET /state reports the active skin from the CLI', async () => {
     const { run } = stubRunner([{ args: ['current'], out: 'minecraft\n' }])
     const server = await serve(makeSkinCenterRoutes({ run }))

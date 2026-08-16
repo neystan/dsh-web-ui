@@ -23,5 +23,5 @@
     "light": "packages/skins/xp/preview/light.png",
     "dark": "packages/skins/xp/preview/dark.png"
   },
-  "order": 3
+  "order": 6
 }

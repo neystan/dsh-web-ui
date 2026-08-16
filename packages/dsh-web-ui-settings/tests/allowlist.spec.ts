@@ -58,6 +58,7 @@ describe('resolveNamespaceEntry', () => {
   it('passes bare family namespaces through', () => {
     expect(resolveNamespaceEntry('pet')).toBe('pet')
     expect(resolveNamespaceEntry('skin-background')).toBe('skin-background')
+    expect(resolveNamespaceEntry('skin-custom-theme')).toBe('skin-custom-theme')
   })
 
   it('ignores packages without a settings namespace and unknown names', () => {
@@ -73,6 +74,7 @@ describe('composeAllowlist', () => {
     'task-board',
     'pet',
     'skin-background',
+    'skin-custom-theme',
     'web-search-deepseek',
   ]
 
@@ -80,13 +82,14 @@ describe('composeAllowlist', () => {
     expect(composeAllowlist([], registered)).toEqual([
       'pet',
       'skin-background',
+      'skin-custom-theme',
       'task-board',
     ])
   })
 
   it('honors user entries, deduplicates, and ignores unknown names', () => {
     expect(composeAllowlist(['dsh-client-ui-task-board', 'dsh-skins', 'dsh-pet', 'nope'], registered))
-      .toEqual(['pet', 'skin-background', 'task-board'])
+      .toEqual(['pet', 'skin-background', 'skin-custom-theme', 'task-board'])
   })
 
   it('drops namespaces not registered in the settings seam', () => {

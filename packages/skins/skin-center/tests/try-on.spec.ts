@@ -105,6 +105,32 @@ const controller = (): TryOnController => new TryOnController({
 })
 
 describe('TryOnController skin switching', () => {
+  it('preserves controller-owned inline values changed during try-on', async () => {
+    window.__DSH_BOOT__ = { entries: [{ id: entry('qq98').package }] }
+    document.body.setAttribute(entry('qq98').bodyAttr, '')
+    document.body.style.setProperty('background-image', 'url(active.png)')
+    document.body.style.setProperty('--dsw-alias-bg-base', '#111111')
+    const events: string[] = []
+    const c = new TryOnController({
+      loadBundle: async target => { ;(0, eval)(bundleTextFor(target.id)) },
+      appearance: {
+        beforeSurfaceChange: () => { events.push('before') },
+        afterSurfaceChange: () => { events.push('after') },
+        afterExit: () => { events.push('exit') },
+      },
+    })
+
+    await c.tryOn(entry('ths'))
+    expect(events).toEqual(['before', 'after'])
+    document.body.style.setProperty('--dsw-alias-bg-base', '#222222')
+    c.exit()
+
+    expect(events).toEqual(['before', 'after', 'before', 'exit'])
+    expect(document.body.style.getPropertyValue('--dsw-alias-bg-base')).toBe('#222222')
+    expect(document.body.style.getPropertyValue('background-image')).toBe('url("active.png")')
+    expect(document.body.getAttribute(entry('qq98').bodyAttr)).toBe('')
+  })
+
   it('switching from ths try-on to another skin leaves no ths residue', async () => {
     const c = controller()
 

@@ -8,6 +8,7 @@ The skin-family aggregate plugin: installing it gives you the skin center (`skin
 
 - **Skin center + full collection**: one package replaces installing skins individually.
 - **Mutual exclusion via `dsh-skin use`**: skin activation is exclusive and managed by `dsh-skin use` (the `managed` section of `~/.dsh/cordis.patch.yml`), so skins live as `skins/` assets only and never enter `patchFrom`.
+- **Compact appearance controls**: customize the official light/dark colors with three colors plus contrast, and use one uploaded WebP background across the official look and every bundled skin with Follow skin / Custom / None modes.
 
 ## Install
 
