@@ -6,11 +6,11 @@ English | [中文](README.zh.md)
 
 ## Install
 
-Install the family aggregate package `@linxin666/dsh-web-ui-all` (all plugins and skins in one) or this plugin alone:
+Install the family aggregate package `@neystan/dsh-web-ui-all` (all plugins and skins in one) or this plugin alone:
 
 ```sh
 # Recommended: install directly from npm
-dsh plugin --profile web add @linxin666/dsh-client-ui-aionui-panel
+dsh plugin --profile web add @neystan/dsh-client-ui-aionui-panel
 
 # Or from the repository (development loop)
 git clone https://github.com/zhu1090093659/dsh-web-ui.git

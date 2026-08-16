@@ -25,7 +25,7 @@ dsh Web GUI 的多列任务看板（UI 类插件）。任务可**真实执行**�
 ## 提交前检查
 
 ```sh
-pnpm --filter @linxin666/dsh-client-ui-task-board test
+pnpm --filter @neystan/dsh-client-ui-task-board test
 pnpm run typecheck
 pnpm run build
 ```

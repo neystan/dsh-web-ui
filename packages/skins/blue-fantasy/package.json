@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-blue-fantasy",
+  "name": "@neystan/dsh-client-ui-skin-blue-fantasy",
   "description": "Hot-pluggable 蓝色幻想 (blue-fantasy) skin for the dsh web GUI: the DreamSkin Codex theme「DeepSeek-鲸鱼娘」adapted — whale-art backdrop with live theme scrim, periwinkle-indigo palette, translucent panes",
   "version": "0.1.15",
   "type": "module",
@@ -46,6 +46,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

@@ -5,39 +5,39 @@
 # from self
 - insert:
     - id: ui-web-ui-compat
-      name: '@linxin666/dsh-web-ui-all'
+      name: '@neystan/dsh-web-ui-all'
 
 # from ../dsh-web-ui-settings
 - insert:
     - id: ui-web-ui-settings
-      name: '@linxin666/dsh-client-ui-web-ui-settings'
+      name: '@neystan/dsh-client-ui-web-ui-settings'
 
 # from ../dsh-aionui-panel
 - insert:
     - id: ui-dsh-aionui-panel
-      name: '@linxin666/dsh-client-ui-aionui-panel'
+      name: '@neystan/dsh-client-ui-aionui-panel'
 
 # from ../dsh-task-board
 - insert:
     - id: ui-task-board
-      name: '@linxin666/dsh-client-ui-task-board'
+      name: '@neystan/dsh-client-ui-task-board'
 
 # from ../dsh-git-graph
 - insert:
     - id: ui-git-graph
-      name: '@linxin666/dsh-client-ui-git-graph'
+      name: '@neystan/dsh-client-ui-git-graph'
 
 # from ../dsh-pet
 - insert:
     - id: pet
-      name: '@linxin666/dsh-pet'
+      name: '@neystan/dsh-pet'
 
 # from ../dsh-tool-describe-image
 - insert:
     - id: describe-image
-      name: '@linxin666/dsh-tool-describe-image'
+      name: '@neystan/dsh-tool-describe-image'
 
 # from ../skins/skin-center (via ../dsh-skins)
 - insert:
     - id: ui-skin-center
-      name: '@linxin666/dsh-client-ui-skin-center'
+      name: '@neystan/dsh-client-ui-skin-center'

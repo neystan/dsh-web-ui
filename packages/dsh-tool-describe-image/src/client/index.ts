@@ -9,7 +9,7 @@
  *
  * Failure policy: every DOM/runtime wiring failure is logged, never thrown —
  * the web shell fails the whole boot when a plugin apply throws.
- * @module @linxin666/dsh-tool-describe-image/client
+ * @module @neystan/dsh-tool-describe-image/client
  */
 
 import type { ClientContext, SettingsScope, SettingsScopeSpec } from '@deepseek-ai/dsh-client-runtime/client'

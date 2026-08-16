@@ -13,24 +13,24 @@
 
 | 目录 | 包名 | 当前版本 | private |
 | --- | --- | --- | --- |
-| packages/dsh-task-board | @linxin666/dsh-client-ui-task-board | 0.1.1 | true |
-| packages/dsh-git-graph | @linxin666/dsh-client-ui-git-graph | 0.1.1 | true |
-| packages/dsh-pet | @linxin666/dsh-pet | 0.1.1 | true |
-| packages/dsh-aionui-panel | @linxin666/dsh-client-ui-aionui-panel | 0.1.1 | true |
-| packages/dsh-web-ui-settings | @linxin666/dsh-client-ui-web-ui-settings | 0.1.1 | true |
-| packages/dsh-skins | @linxin666/dsh-skins（聚合） | 0.1.1 | true |
-| packages/dsh-web-ui-all | @linxin666/dsh-web-ui-all（聚合） | 0.1.1 | true |
-| packages/skins/qq98 | @linxin666/dsh-client-ui-skin-qq98 | 0.1.1 | true |
-| packages/skins/ths | @linxin666/dsh-client-ui-skin-ths | 0.1.1 | true |
-| packages/skins/xp | @linxin666/dsh-client-ui-skin-xp | 0.1.1 | true |
-| packages/skins/blue-fantasy | @linxin666/dsh-client-ui-skin-blue-fantasy | 0.1.1 | true |
-| packages/skins/dragon-heir | @linxin666/dsh-client-ui-skin-dragon-heir | 0.1.1 | true |
-| packages/skins/minecraft | @linxin666/dsh-client-ui-skin-minecraft | 0.1.1 | true |
-| packages/skins/whale-song | @linxin666/dsh-client-ui-skin-whale-song | 0.1.0 | true |
-| packages/skins/harbor | @linxin666/dsh-client-ui-skin-harbor | 0.1.14 | true |
-| packages/skins/trading | @linxin666/dsh-client-ui-skin-trading | 0.1.2 | true |
-| packages/skins/skin-center | @linxin666/dsh-client-ui-skin-center | 0.1.1 | true |
-| packages/skins/miku | @linxin666/dsh-client-ui-skin-miku | 0.1.12 | true |
+| packages/dsh-task-board | @neystan/dsh-client-ui-task-board | 0.1.1 | true |
+| packages/dsh-git-graph | @neystan/dsh-client-ui-git-graph | 0.1.1 | true |
+| packages/dsh-pet | @neystan/dsh-pet | 0.1.1 | true |
+| packages/dsh-aionui-panel | @neystan/dsh-client-ui-aionui-panel | 0.1.1 | true |
+| packages/dsh-web-ui-settings | @neystan/dsh-client-ui-web-ui-settings | 0.1.1 | true |
+| packages/dsh-skins | @neystan/dsh-skins（聚合） | 0.1.1 | true |
+| packages/dsh-web-ui-all | @neystan/dsh-web-ui-all（聚合） | 0.1.1 | true |
+| packages/skins/qq98 | @neystan/dsh-client-ui-skin-qq98 | 0.1.1 | true |
+| packages/skins/ths | @neystan/dsh-client-ui-skin-ths | 0.1.1 | true |
+| packages/skins/xp | @neystan/dsh-client-ui-skin-xp | 0.1.1 | true |
+| packages/skins/blue-fantasy | @neystan/dsh-client-ui-skin-blue-fantasy | 0.1.1 | true |
+| packages/skins/dragon-heir | @neystan/dsh-client-ui-skin-dragon-heir | 0.1.1 | true |
+| packages/skins/minecraft | @neystan/dsh-client-ui-skin-minecraft | 0.1.1 | true |
+| packages/skins/whale-song | @neystan/dsh-client-ui-skin-whale-song | 0.1.0 | true |
+| packages/skins/harbor | @neystan/dsh-client-ui-skin-harbor | 0.1.14 | true |
+| packages/skins/trading | @neystan/dsh-client-ui-skin-trading | 0.1.2 | true |
+| packages/skins/skin-center | @neystan/dsh-client-ui-skin-center | 0.1.1 | true |
+| packages/skins/miku | @neystan/dsh-client-ui-skin-miku | 0.1.12 | true |
 
 ## 二、发布前检查结论（2026-08-11，已修复项标注 [已确认]）
 

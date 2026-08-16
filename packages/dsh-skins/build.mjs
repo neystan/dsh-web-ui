@@ -11,7 +11,7 @@
  *   - lib/index.js (the skin's host entry, a trivial apply(){} - Cordis
  *     needs a resolvable main for the boot-graph insert row)
  *   - package.json (generated minimal leaf package so the profile symlink /
- *     profile node_modules can resolve @linxin666/dsh-client-ui-skin-<id>)
+ *     profile node_modules can resolve @neystan/dsh-client-ui-skin-<id>)
  *   - cordis.patch.yml (the skin's own patch row, for `dsh plugin add`)
  * Directories without a skin.json (skin-center itself, workspace
  * scaffolding) are skipped.
@@ -23,7 +23,7 @@
  * apply already reported ok:true.
  *
  * Re-run whenever a skin is added/changed, then rebuild:
- *   pnpm --filter @linxin666/dsh-skins build
+ *   pnpm --filter @neystan/dsh-skins build
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -45,7 +45,7 @@ function readJson(filePath) {
 
 /**
  * Render the minimal resolvable leaf package.json a bundled skin needs to be
- * loadable as @linxin666/dsh-client-ui-skin-<id> from the profile. Mirrors the
+ * loadable as @neystan/dsh-client-ui-skin-<id> from the profile. Mirrors the
  * source skin package's exports shape (minus the non-shipped ./src/*) and
  * carries the official dsh.bundle manifest so the carrier is also a valid
  * turtle-ui bundle for `dsh plugin add`.
@@ -56,7 +56,7 @@ function renderCarrierPackageJson(sourcePkg) {
   const pkg = {
     name: sourcePkg.name,
     version: sourcePkg.version,
-    description: 'Bundled skin inside @linxin666/dsh-skins (' + sourcePkg.name + ').',
+    description: 'Bundled skin inside @neystan/dsh-skins (' + sourcePkg.name + ').',
     type: 'module',
     main: 'lib/index.js',
     exports: {

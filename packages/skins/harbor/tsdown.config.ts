@@ -1,3 +1,3 @@
 import { clientBundle } from '../../../shared/tsdown.client.ts'
 
-export default clientBundle('@linxin666/dsh-client-ui-skin-harbor', ['src/index.ts'])
+export default clientBundle('@neystan/dsh-client-ui-skin-harbor', ['src/index.ts'])

@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-whale-song",
+  "name": "@neystan/dsh-client-ui-skin-whale-song",
   "description": "Hot-pluggable 鲸吟 (whale-song) skin for the dsh web GUI: deep-sea whale-goddess ambience — text-free ocean art backdrop with live theme scrim, ice-blue/cyan/navy palette with gold-thread accents, translucent panes",
   "version": "0.1.15",
   "type": "module",
@@ -46,6 +46,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

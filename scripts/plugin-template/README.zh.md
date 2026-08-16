@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-__NAME__
+# @neystan/dsh-client-ui-__NAME__
 
 [English](README.md) | 中文
 
@@ -14,7 +14,7 @@ DSH Web GUI 插件 __NAME__ —— 由 scripts/plugin-template 生成的骨架�
 ### 从 npm 安装（推荐）
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-client-ui-__NAME__
+dsh plugin --profile web add @neystan/dsh-client-ui-__NAME__
 ```
 
 ### 从仓库安装（开发调试）

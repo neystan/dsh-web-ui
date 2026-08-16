@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-trading",
+  "name": "@neystan/dsh-client-ui-skin-trading",
   "description": "Hot-pluggable stock-trading skin for the dsh web GUI: live ticker tape, longbridge/fun-ticker quote feeds, market-session status bar",
   "version": "0.1.15",
   "type": "module",
@@ -46,5 +46,15 @@
     "README.md",
     "README.zh.md",
     "README.i18n.yaml"
+  ],
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
   ]
 }

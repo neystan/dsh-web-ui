@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-web-ui-settings
+# @neystan/dsh-client-ui-web-ui-settings
 
 [English](README.md) | 中文
 
@@ -13,7 +13,7 @@
 ### 从 npm 安装（推荐）
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-client-ui-web-ui-settings
+dsh plugin --profile web add @neystan/dsh-client-ui-web-ui-settings
 ```
 
 ### 从仓库安装（开发调试）

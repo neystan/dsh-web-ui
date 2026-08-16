@@ -3,7 +3,7 @@
  * vocabulary onto the pet's visual phases and carries an optional completed-
  * turn reward for the ledger. Holds no state of its own; callers keep a
  * {@link ProjectionRuntime} per session and feed events in arrival order.
- * @module @linxin666/dsh-pet/event-projection
+ * @module @neystan/dsh-pet/event-projection
  */
 
 import type { SessionEvent } from '@deepseek-ai/dsh-session'

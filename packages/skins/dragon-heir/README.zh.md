@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-dragon-heir
+# @neystan/dsh-client-ui-skin-dragon-heir
 
 [English](README.md) | 中文
 
@@ -10,13 +10,13 @@
 
 ## 安装（官方 bundle 方式）
 
-推荐先装皮肤全家桶聚合包 `@linxin666/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
+推荐先装皮肤全家桶聚合包 `@neystan/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
 
 ```sh
 # 装全部皮肤（推荐）
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # 或单独装本皮肤
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-dragon-heir
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-dragon-heir
 # 皮肤启用：dsh-skin use dragon-heir
 # 从仓库安装（开发调试）：dsh plugin --profile web add link:$(pwd)/packages/skins/dragon-heir
 ```
@@ -38,7 +38,7 @@ pnpm test    # vitest: apply/dispose contract spec (dual-theme art swap)
 
 ```sh
 node scripts/skin-center-bundles    # re-embed this skin into skin-center's registry
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 node scripts/gallery-build          # refresh the gallery manifest/bundles
 node scripts/capture-previews       # re-shoot preview/light.png + preview/dark.png
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-skins",
+  "name": "@neystan/dsh-skins",
   "description": "皮肤全家桶聚合插件：装它 = 皮肤中心（skin-center）+ 全部皮肤资产（qq98 / ths / xp / blue-fantasy / dragon-heir / minecraft / miku / trading 等，内置在包的 skins/ 目录，无需每皮肤独立 npm 包）。皮肤启用互斥由 dsh-skin use 管理（~/.dsh/cordis.patch.yml managed 区段），因此皮肤只进 skins/ 资产、不进 patchFrom。",
   "version": "0.1.15",
   "type": "module",
@@ -20,10 +20,20 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git",
+    "url": "https://github.com/neystan/dsh-web-ui.git",
     "directory": "packages/dsh-skins"
   },
   "dependencies": {
-    "@linxin666/dsh-client-ui-skin-center": "workspace:*"
-  }
+    "@neystan/dsh-client-ui-skin-center": "workspace:*"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

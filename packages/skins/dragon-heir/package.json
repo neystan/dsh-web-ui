@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-dragon-heir",
+  "name": "@neystan/dsh-client-ui-skin-dragon-heir",
   "description": "Hot-pluggable 龙的传人 (Dragon Heir) skin for the dsh web GUI: one skin, two paintings — light theme rides the ink dragon with a vermilion seal, dark theme rides the Great Wall with gold accents; both artworks inline, no static files",
   "version": "0.1.15",
   "type": "module",
@@ -44,6 +44,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

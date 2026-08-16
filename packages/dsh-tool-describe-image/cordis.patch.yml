@@ -12,4 +12,4 @@
 # built-in plugin config page from the `describe-image` settings section.
 - insert:
     - id: describe-image
-      name: '@linxin666/dsh-tool-describe-image'
+      name: '@neystan/dsh-tool-describe-image'

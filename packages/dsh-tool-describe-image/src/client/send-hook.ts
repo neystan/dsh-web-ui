@@ -9,7 +9,7 @@
  * The hook wraps the conversation service's sendSession method in place. It
  * is structural (no dependency on the conversation package's internal
  * types) and idempotent (a module marker guards against double install).
- * @module @linxin666/dsh-tool-describe-image/client/send-hook
+ * @module @neystan/dsh-tool-describe-image/client/send-hook
  */
 
 import { readFileAsBase64, uploadImageForDescribe } from './attach.ts'

@@ -37,11 +37,11 @@ tests/*.spec.ts                             # vitest：领域、存储、调度�
 
 ## 安装
 
-推荐安装全家桶聚合包 `@linxin666/dsh-web-ui-all`，或单独安装本插件：
+推荐安装全家桶聚合包 `@neystan/dsh-web-ui-all`，或单独安装本插件：
 
 ```sh
 # npm 安装
-dsh plugin --profile web add @linxin666/dsh-client-ui-task-board
+dsh plugin --profile web add @neystan/dsh-client-ui-task-board
 
 # 仓库安装（开发调试）
 git clone https://github.com/neystan/dsh-web-ui.git
@@ -55,9 +55,9 @@ dsh plugin --profile web add link:$(pwd)/packages/dsh-task-board
 ## 构建与测试
 
 ```sh
-pnpm --filter @linxin666/dsh-client-ui-task-board typecheck
-pnpm --filter @linxin666/dsh-client-ui-task-board test
-pnpm --filter @linxin666/dsh-client-ui-task-board build   # lib/index.js + lib/client.js
+pnpm --filter @neystan/dsh-client-ui-task-board typecheck
+pnpm --filter @neystan/dsh-client-ui-task-board test
+pnpm --filter @neystan/dsh-client-ui-task-board build   # lib/index.js + lib/client.js
 ```
 
 ## 数据与工作区

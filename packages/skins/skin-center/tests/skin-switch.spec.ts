@@ -4,7 +4,7 @@
  * ~/.dsh is never touched: they assert the managed patch-section rewrite, the
  * profile node_modules symlink, the active-skin reading, and the
  * skin.json-derived registry — mirroring scripts/dsh-skin.test.mjs.
- * @module @linxin666/dsh-client-ui-skin-center/tests/skin-switch
+ * @module @neystan/dsh-client-ui-skin-center/tests/skin-switch
  */
 
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readlinkSync, rmSync, existsSync, symlinkSync, lstatSync, realpathSync, chmodSync, statSync } from 'node:fs'
@@ -110,12 +110,12 @@ describe('skin registry derivation (from skin.json wiring)', () => {
   it('loadRegistry() maps every installed skin to its wiring metadata', () => {
     const registry = loadRegistry()
     expect(registry.qq98).toEqual(expect.objectContaining({
-      pkg: '@linxin666/dsh-client-ui-skin-qq98',
+      pkg: '@neystan/dsh-client-ui-skin-qq98',
       id: 'ui-skin-qq98',
     }))
     expect(registry.ths).toEqual(expect.objectContaining({ id: 'ui-skin-ths' }))
     expect(registry['blue-fantasy']).toEqual(expect.objectContaining({
-      pkg: '@linxin666/dsh-client-ui-skin-blue-fantasy',
+      pkg: '@neystan/dsh-client-ui-skin-blue-fantasy',
       id: 'ui-skin-blue-fantasy',
     }))
     // No skin is bundle-wired in the npm aggregate layout — xp ships like the
@@ -129,7 +129,7 @@ describe('skin.json validation (malicious registry input)', () => {
   it('loadRegistry skips packages with traversal names, quoted/newline names, and invalid wiring ids', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-malicious-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       const traversal = join(scoped, 'dsh-client-ui-skin-evil-traversal')
       const quoted = join(scoped, 'dsh-client-ui-skin-evil-quoted')
       const badWiring = join(scoped, 'dsh-client-ui-skin-evil-wiring')
@@ -145,23 +145,23 @@ describe('skin.json validation (malicious registry input)', () => {
       }))
       writeFileSync(join(quoted, 'skin.json'), JSON.stringify({
         id: 'evil-quoted',
-        package: "'@linxin666/evil'\n- id: ui-skin-hacked",
+        package: "'@neystan/evil'\n- id: ui-skin-hacked",
         wiring: { id: 'ui-skin-evil-quoted' },
       }))
       writeFileSync(join(badWiring, 'skin.json'), JSON.stringify({
         id: 'evil-wiring',
-        package: '@linxin666/dsh-client-ui-skin-evil-wiring',
+        package: '@neystan/dsh-client-ui-skin-evil-wiring',
         wiring: { id: 'ui-skin-../evil' },
       }))
       writeFileSync(join(good, 'skin.json'), JSON.stringify({
         id: 'good',
-        package: '@linxin666/dsh-client-ui-skin-good',
+        package: '@neystan/dsh-client-ui-skin-good',
         wiring: { id: 'ui-skin-good' },
       }))
       const registry = loadRegistry(scoped)
       expect(Object.keys(registry).sort()).toEqual(['good'])
       expect(registry.good).toEqual(expect.objectContaining({
-        pkg: '@linxin666/dsh-client-ui-skin-good',
+        pkg: '@neystan/dsh-client-ui-skin-good',
         id: 'ui-skin-good',
       }))
     } finally {
@@ -174,13 +174,13 @@ describe('renderManaged YAML safety', () => {
   it('escapes single quotes in the active package name so the insert row stays one YAML scalar', () => {
     const registry: Record<string, SkinSwitchEntry> = {
       evil: {
-        pkg: "@linxin666/dsh-client-ui-skin-na'me",
+        pkg: "@neystan/dsh-client-ui-skin-na'me",
         id: 'ui-skin-evil',
         dir: '/tmp/evil-skin',
         bundleWired: false,
       },
       other: {
-        pkg: '@linxin666/dsh-client-ui-skin-other',
+        pkg: '@neystan/dsh-client-ui-skin-other',
         id: 'ui-skin-other',
         dir: '/tmp/other-skin',
         bundleWired: false,
@@ -188,9 +188,9 @@ describe('renderManaged YAML safety', () => {
     }
     const rendered = renderManaged('evil', registry)
     const nameLine = rendered.split('\n').find(line => line.trimStart().startsWith('name: '))
-    expect(nameLine).toBe("      name: '@linxin666/dsh-client-ui-skin-na''me'")
+    expect(nameLine).toBe("      name: '@neystan/dsh-client-ui-skin-na''me'")
     // The unescaped quote must never appear as a bare scalar delimiter.
-    expect(rendered).not.toContain("name: '@linxin666/dsh-client-ui-skin-na'me'")
+    expect(rendered).not.toContain("name: '@neystan/dsh-client-ui-skin-na'me'")
   })
 })
 
@@ -535,7 +535,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const h = fakeHome()
     const modules = join(h, 'modules')
     const entry: SkinSwitchEntry = {
-      pkg: '@linxin666/dsh-client-ui-skin-qq98',
+      pkg: '@neystan/dsh-client-ui-skin-qq98',
       id: 'ui-skin-qq98',
       dir: join(h, 'unused'),
       bundleWired: false,
@@ -563,7 +563,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const h = fakeHome()
     const modules = join(h, 'modules')
     const entry: SkinSwitchEntry = {
-      pkg: '@linxin666/dsh-client-ui-skin-qq98',
+      pkg: '@neystan/dsh-client-ui-skin-qq98',
       id: 'ui-skin-qq98',
       dir: join(h, 'unused'),
       bundleWired: false,
@@ -572,7 +572,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const standalone = join(h, 'installed', entry.pkg)
     mkdirSync(standalone, { recursive: true })
     writeFileSync(join(standalone, 'cordis.patch.yml'), `- insert:\n    - id: ${entry.id}\n      name: '${entry.pkg}'\n`)
-    mkdirSync(join(modules, '@linxin666'), { recursive: true })
+    mkdirSync(join(modules, '@neystan'), { recursive: true })
     symlinkSync(standalone, join(modules, entry.pkg), process.platform === 'win32' ? 'junction' : 'dir')
     expect(activeSkinIsBundleWired(entry, modules)).toBe(true)
   })
@@ -581,7 +581,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const h = fakeHome()
     const modules = join(h, 'modules')
     const entry: SkinSwitchEntry = {
-      pkg: '@linxin666/dsh-client-ui-skin-qq98',
+      pkg: '@neystan/dsh-client-ui-skin-qq98',
       id: 'ui-skin-qq98',
       dir: join(h, 'unused'),
       bundleWired: false,
@@ -590,7 +590,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     // the profile manifest authoritatively lists the package as bundle-wired.
     const carrier = join(h, 'dsh-skins', 'skins', 'qq98')
     mkdirSync(carrier, { recursive: true })
-    mkdirSync(join(modules, '@linxin666'), { recursive: true })
+    mkdirSync(join(modules, '@neystan'), { recursive: true })
     symlinkSync(carrier, join(modules, entry.pkg), process.platform === 'win32' ? 'junction' : 'dir')
     const manifest = join(h, 'package.json')
     writeFileSync(manifest, JSON.stringify({ dsh: { profile: { bundles: [entry.pkg] } } }))
@@ -601,7 +601,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const h = fakeHome()
     const modules = join(h, 'modules')
     const entry: SkinSwitchEntry = {
-      pkg: '@linxin666/dsh-client-ui-skin-whale-song',
+      pkg: '@neystan/dsh-client-ui-skin-whale-song',
       id: 'ui-skin-whale-song',
       dir: join(h, 'code', 'dsh-web-ui', 'packages', 'skins', 'whale-song'),
       bundleWired: false,
@@ -612,7 +612,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     // reconciles such a link, so it must keep its home insert row.
     makeSkinPackage(entry.dir, entry)
     writeFileSync(join(entry.dir, 'cordis.patch.yml'), `- insert:\n    - id: ${entry.id}\n      name: '${entry.pkg}'\n`)
-    mkdirSync(join(modules, '@linxin666'), { recursive: true })
+    mkdirSync(join(modules, '@neystan'), { recursive: true })
     symlinkSync(entry.dir, join(modules, entry.pkg), process.platform === 'win32' ? 'junction' : 'dir')
     const manifest = join(h, 'package.json')
     writeFileSync(manifest, JSON.stringify({ dsh: { profile: { bundles: [] } }, dependencies: {} }))
@@ -623,7 +623,7 @@ describe('home patch lifecycle vs installed skin bundles (issue #108/#148)', () 
     const h = fakeHome()
     const modules = join(h, 'modules')
     const entry: SkinSwitchEntry = {
-      pkg: '@linxin666/dsh-client-ui-skin-blue-fantasy',
+      pkg: '@neystan/dsh-client-ui-skin-blue-fantasy',
       id: 'ui-skin-blue-fantasy',
       dir: join(h, 'unused'),
       bundleWired: false,
@@ -689,7 +689,7 @@ describe('npm-install layout registry scan (issue #21/#33/#34)', () => {
   it('loadRegistry scans a scoped dir of dsh-client-ui-skin-* packages, skipping non-skin dirs', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-npm-layout-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       mkdirSync(join(scoped, 'dsh-client-ui-skin-qq98'), { recursive: true })
       mkdirSync(join(scoped, 'dsh-client-ui-skin-ths'), { recursive: true })
       // Non-skin packages in the same scoped dir must be skipped.
@@ -697,18 +697,18 @@ describe('npm-install layout registry scan (issue #21/#33/#34)', () => {
       mkdirSync(join(scoped, 'dsh-task-board'), { recursive: true })
       writeFileSync(join(scoped, 'dsh-client-ui-skin-qq98', 'skin.json'), JSON.stringify({
         id: 'qq98',
-        package: '@linxin666/dsh-client-ui-skin-qq98',
+        package: '@neystan/dsh-client-ui-skin-qq98',
         wiring: { id: 'ui-skin-qq98' },
       }))
       writeFileSync(join(scoped, 'dsh-client-ui-skin-ths', 'skin.json'), JSON.stringify({
         id: 'ths',
-        package: '@linxin666/dsh-client-ui-skin-ths',
+        package: '@neystan/dsh-client-ui-skin-ths',
         wiring: { id: 'ui-skin-ths', bundleWired: true },
       }))
       const registry = loadRegistry(scoped)
       expect(Object.keys(registry).sort()).toEqual(['qq98', 'ths'])
       expect(registry.qq98).toEqual(expect.objectContaining({
-        pkg: '@linxin666/dsh-client-ui-skin-qq98',
+        pkg: '@neystan/dsh-client-ui-skin-qq98',
         id: 'ui-skin-qq98',
         dir: join(scoped, 'dsh-client-ui-skin-qq98'),
       }))
@@ -743,7 +743,7 @@ describe('bundled-skins carrier (dsh-skins/skins/<id>, npm layout)', () => {
   it('loadRegistry collects skins bundled inside the dsh-skins aggregate', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-carrier-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       // The aggregate carrier with bundled skin assets.
       const carrier = join(scoped, 'dsh-skins', 'skins')
       mkdirSync(join(carrier, 'miku', 'lib'), { recursive: true })
@@ -754,17 +754,17 @@ describe('bundled-skins carrier (dsh-skins/skins/<id>, npm layout)', () => {
       mkdirSync(join(scoped, 'dsh-pet'), { recursive: true })
       writeFileSync(join(carrier, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       writeFileSync(join(carrier, 'trading', 'skin.json'), JSON.stringify({
         id: 'trading',
-        package: '@linxin666/dsh-client-ui-skin-trading',
+        package: '@neystan/dsh-client-ui-skin-trading',
         wiring: { id: 'ui-skin-trading' },
       }))
       writeFileSync(join(scoped, 'dsh-client-ui-skin-qq98', 'skin.json'), JSON.stringify({
         id: 'qq98',
-        package: '@linxin666/dsh-client-ui-skin-qq98',
+        package: '@neystan/dsh-client-ui-skin-qq98',
         wiring: { id: 'ui-skin-qq98' },
       }))
       const registry = loadRegistry(scoped)
@@ -782,18 +782,18 @@ describe('bundled-skins carrier (dsh-skins/skins/<id>, npm layout)', () => {
   it('deterministically prefers the direct package when carrier and legacy package share an id', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-carrier-conflict-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       const carrier = join(scoped, 'dsh-skins', 'skins')
       mkdirSync(join(carrier, 'miku', 'lib'), { recursive: true })
       mkdirSync(join(scoped, 'dsh-client-ui-skin-miku'), { recursive: true })
       writeFileSync(join(carrier, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       writeFileSync(join(scoped, 'dsh-client-ui-skin-miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       const registry = loadRegistry(scoped)
@@ -807,26 +807,26 @@ describe('bundled-skins carrier (dsh-skins/skins/<id>, npm layout)', () => {
 })
 
 describe('pnpm virtual-store layout (realpathed .pnpm packages)', () => {
-  it('findScopedAnchor walks up to the node_modules root owning @linxin666', () => {
+  it('findScopedAnchor walks up to the node_modules root owning @neystan', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-pnpm-'))
     try {
-      // pnpm hoisted layout: node_modules/@linxin666/* are symlinks into
+      // pnpm hoisted layout: node_modules/@neystan/* are symlinks into
       // .pnpm/<pkg>@<ver>/node_modules/, so the skin-center package realpath
       // sits deep under .pnpm and cannot see its siblings via ../../
       const nm = join(fakeRoot, 'node_modules')
-      const storePkg = join(nm, '.pnpm', '@linxin666+dsh-client-ui-skin-center@0.1.3', 'node_modules', '@linxin666', 'dsh-client-ui-skin-center')
-      const carrier = join(nm, '@linxin666', 'dsh-skins', 'skins')
+      const storePkg = join(nm, '.pnpm', '@neystan+dsh-client-ui-skin-center@0.1.3', 'node_modules', '@neystan', 'dsh-client-ui-skin-center')
+      const carrier = join(nm, '@neystan', 'dsh-skins', 'skins')
       mkdirSync(join(storePkg, 'lib'), { recursive: true })
       mkdirSync(join(carrier, 'miku', 'lib'), { recursive: true })
       writeFileSync(join(carrier, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
-      // The anchor is the @linxin666/ scoped dir holding the carrier.
-      expect(findScopedAnchor(join(storePkg, 'lib'))).toBe(join(nm, '@linxin666'))
+      // The anchor is the @neystan/ scoped dir holding the carrier.
+      expect(findScopedAnchor(join(storePkg, 'lib'))).toBe(join(nm, '@neystan'))
       // And the registry resolves bundled skins through that scoped dir.
-      const registry = loadRegistry(join(nm, '@linxin666'))
+      const registry = loadRegistry(join(nm, '@neystan'))
       expect(Object.keys(registry).sort()).toEqual(['miku'])
       expect(registry.miku.dir).toBe(join(carrier, 'miku'))
     } finally {
@@ -838,18 +838,18 @@ describe('pnpm virtual-store layout (realpathed .pnpm packages)', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-pnpm-e2e-'))
     try {
       // pnpm virtual store: the skin-center package realpath sits deep under
-      // .pnpm/<pkg>@<ver>/node_modules/@linxin666/, its ../../ sibling dir
+      // .pnpm/<pkg>@<ver>/node_modules/@neystan/, its ../../ sibling dir
       // holds only itself, and the real skins live in the hoisted scoped dir.
       const nm = join(fakeRoot, 'node_modules')
-      const storeScoped = join(nm, '.pnpm', '@linxin666+dsh-client-ui-skin-center@0.1.3', 'node_modules', '@linxin666')
+      const storeScoped = join(nm, '.pnpm', '@neystan+dsh-client-ui-skin-center@0.1.3', 'node_modules', '@neystan')
       const storePkg = join(storeScoped, 'dsh-client-ui-skin-center')
-      const scoped = join(nm, '@linxin666')
+      const scoped = join(nm, '@neystan')
       const carrier = join(scoped, 'dsh-skins', 'skins')
       mkdirSync(join(storePkg, 'lib'), { recursive: true })
       mkdirSync(join(carrier, 'miku', 'lib'), { recursive: true })
       writeFileSync(join(carrier, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       // The module location the resolver must anchor from (inside the store).
@@ -867,12 +867,12 @@ describe('self-referential symlink defense (issue #43: ELOOP on second skin swit
   it('listSkinDirCandidates skips symlink entries in Pass 1', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-symlink-skip-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       const real = join(scoped, 'dsh-skins', 'skins')
       mkdirSync(join(real, 'miku', 'lib'), { recursive: true })
       writeFileSync(join(real, 'miku', 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       // A legacy per-skin alias symlink pointing at the real skin dir (the
@@ -883,7 +883,7 @@ describe('self-referential symlink defense (issue #43: ELOOP on second skin swit
       mkdirSync(join(scoped, 'dsh-client-ui-skin-qq98'), { recursive: true })
       writeFileSync(join(scoped, 'dsh-client-ui-skin-qq98', 'skin.json'), JSON.stringify({
         id: 'qq98',
-        package: '@linxin666/dsh-client-ui-skin-qq98',
+        package: '@neystan/dsh-client-ui-skin-qq98',
         wiring: { id: 'ui-skin-qq98' },
       }))
       const candidates = listSkinDirCandidates(scoped)
@@ -901,12 +901,12 @@ describe('self-referential symlink defense (issue #43: ELOOP on second skin swit
   it('loadRegistry realpath-dedupes a symlink-aliased carrier entry, preferring the real dir', () => {
     const fakeRoot = mkdtempSync(join(tmpdir(), 'skin-realpath-dedupe-'))
     try {
-      const scoped = join(fakeRoot, '@linxin666')
+      const scoped = join(fakeRoot, '@neystan')
       const direct = join(scoped, 'dsh-client-ui-skin-miku')
       mkdirSync(join(direct, 'lib'), { recursive: true })
       writeFileSync(join(direct, 'skin.json'), JSON.stringify({
         id: 'miku',
-        package: '@linxin666/dsh-client-ui-skin-miku',
+        package: '@neystan/dsh-client-ui-skin-miku',
         wiring: { id: 'ui-skin-miku' },
       }))
       // The carrier entry is a symlink back to the SAME real dir (the shape

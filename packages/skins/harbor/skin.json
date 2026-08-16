@@ -16,7 +16,7 @@
   ],
   "accent": "#ff9d5c",
   "bodyAttr": "data-dsh-harbor",
-  "package": "@linxin666/dsh-client-ui-skin-harbor",
+  "package": "@neystan/dsh-client-ui-skin-harbor",
   "wiring": {
     "id": "ui-skin-harbor",
     "bundleWired": false

@@ -7,7 +7,7 @@
  * on the new-conversation screen no session exists, and a dock-mounted pet
  * would vanish there (issue #48). When the pet is hidden the entry becomes a
  * fixed-position summon button.
- * @module @linxin666/dsh-pet/client
+ * @module @neystan/dsh-pet/client
  */
 
 import type { ClientContext, SettingsScope, SettingsScopeSpec } from '@deepseek-ai/dsh-client-runtime/client'

@@ -1,7 +1,7 @@
 ---
 name: dsh-web-ui-release
-description: Release and publish the dsh-web-ui monorepo (DSH Web GUI plugin family + skin collection) — bump all packages to one unified version, commit and tag, push the vX.Y.Z tag that triggers the GitHub Actions publish pipeline, and verify the npm publish + GitHub Release. Covers post-release verification and bad-version recovery. Use when the user asks to 发布/发版/release/bump 版本/publish a new version of dsh-web-ui or any @linxin666/dsh-* package.
-whenToUse: The user wants to release dsh-web-ui (发布新版、发个版本、release、tag、publish @linxin666/dsh-* 包), build or change the release pipeline (release 管线、CI 发布), or recover from a bad published version (坏包、回滚、deprecate). Not for routine commits, skin development (see skin-developer skill), or CI-only changes without a release.
+description: Release and publish the dsh-web-ui monorepo (DSH Web GUI plugin family + skin collection) — bump all packages to one unified version, commit and tag, push the vX.Y.Z tag that triggers the GitHub Actions publish pipeline, and verify the npm publish + GitHub Release. Covers post-release verification and bad-version recovery. Use when the user asks to 发布/发版/release/bump 版本/publish a new version of dsh-web-ui or any @neystan/dsh-* package.
+whenToUse: The user wants to release dsh-web-ui (发布新版、发个版本、release、tag、publish @neystan/dsh-* 包), build or change the release pipeline (release 管线、CI 发布), or recover from a bad published version (坏包、回滚、deprecate). Not for routine commits, skin development (see skin-developer skill), or CI-only changes without a release.
 ---
 
 # dsh-web-ui 发布（release / publish）
@@ -13,12 +13,12 @@ GitHub Actions 发布管线（构建/测试/npm 发布/GitHub Release）→ 发�
 
 - 仓库：zhu1090093659/dsh-web-ui（**PUBLIC**），本机路径 /Users/zcl/code/dsh-web-ui。
 - 全家桶 23 个包：packages/dsh-*（12 个）+ packages/skins/*（11 个，含 skin-center）。
-  全部发布到 npm scope `@linxin666`，registry 固定 registry.npmjs.org。
+  全部发布到 npm scope `@neystan`，registry 固定 registry.npmjs.org。
 - **版本策略：全仓统一版本**（tag vX.Y.Z = 每个 package.json 的 version，由管线强制校验）。
 - npm 不允许重复发布同一版本号：已发布过的版本号（如 0.1.3/0.1.4/0.1.5）不可重发，
   只能 bump 到下一个版本。
 - 发布通道：本机通常没有 npm 登录态（`npm whoami` 401 属正常）；npm 发布全部由
-  GitHub Actions 管线完成，使用仓库 secret `NPM_TOKEN`（npm automation token，@linxin666 scope）。
+  GitHub Actions 管线完成，使用仓库 secret `NPM_TOKEN`（npm automation token，@neystan scope）。
 - 根 package.json 是 private（不发布）；`pnpm -r publish` 自动跳过。
 - 仓库禁 emoji（所有文件含提交信息与 tag 信息）；CI 会校验。
 
@@ -106,10 +106,10 @@ gh run list --workflow=release.yml    # 查历史
 ## 4. 发布后验证（必须逐项执行）
 
 ```sh
-npm view @linxin666/dsh-web-ui-all version          # 期望 = X.Y.Z
-npm view @linxin666/dsh-client-ui-skin-center version
+npm view @neystan/dsh-web-ui-all version          # 期望 = X.Y.Z
+npm view @neystan/dsh-client-ui-skin-center version
 gh release view "vX.Y.Z"                            # Release 已创建、notes 为分类更新说明（scripts/release-notes.mjs 生成）
-gh release view "vX.Y.Z" --json assets               # 23 个 @linxin666/dsh-* tgz 资产已附上（scripts/release-assets.mjs 上传）
+gh release view "vX.Y.Z" --json assets               # 23 个 @neystan/dsh-* tgz 资产已附上（scripts/release-assets.mjs 上传）
 gh run list --workflow=release.yml                  # 全部成功
 git ls-remote --tags origin | grep "vX.Y.Z"         # tag 已在远端
 ```
@@ -124,4 +124,4 @@ git ls-remote --tags origin | grep "vX.Y.Z"         # tag 已在远端
   （--ignore-scripts 安装 + 检查放在 Build 之前）：提交者必须把「产物 + gallery 资产」同一次
   构建一起提交；不要试图在 CI 里重新构建后做一致性比对。
 - 提交信息、tag、Release 标题均禁 emoji（仓库硬性规则，CI 强制）。
-- 本技能适用于 @linxin666/dsh-* 全家桶整体发版；单包 hotfix 也遵循同一流程（版本仍全仓统一）。
+- 本技能适用于 @neystan/dsh-* 全家桶整体发版；单包 hotfix 也遵循同一流程（版本仍全仓统一）。

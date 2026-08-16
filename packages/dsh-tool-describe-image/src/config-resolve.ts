@@ -4,7 +4,7 @@
  * resolution seams, and the schemastery section that doubles as the plugin's
  * settings card schema. Kept separate from tool registration and the vision
  * HTTP client so single purpose stays single file.
- * @module @linxin666/dsh-tool-describe-image/config
+ * @module @neystan/dsh-tool-describe-image/config
  */
 
 import type { Context } from '@deepseek-ai/cordis'

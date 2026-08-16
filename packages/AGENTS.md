@@ -15,7 +15,7 @@
   （两侧 program 都编译）。新增源码文件必须落在三个区之一。
 - **exports 约定**：包内 `exports` 提供 `.`（host）、`./client`（浏览器半区）、
   必要时 `./invariant`；`./src/*` 用于测试引用。UI 类包按惯例
-  `@linxin666/dsh-client-ui-*` 命名。
+  `@neystan/dsh-client-ui-*` 命名。
 
 ## SDK 与构建约束
 

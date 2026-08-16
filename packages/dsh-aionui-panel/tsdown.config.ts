@@ -9,7 +9,7 @@
  */
 import { clientBundle } from '../../shared/tsdown.client.ts'
 
-export default clientBundle('@linxin666/dsh-client-ui-aionui-panel', ['src/index.ts'], {
+export default clientBundle('@neystan/dsh-client-ui-aionui-panel', ['src/index.ts'], {
   libExternal: [
     '@deepseek-ai/dsh-client-locale',
     '@deepseek-ai/dsh-client-runtime',

@@ -13,7 +13,7 @@
   ],
   "accent": "#e60012",
   "bodyAttr": "data-dsh-ths",
-  "package": "@linxin666/dsh-client-ui-skin-ths",
+  "package": "@neystan/dsh-client-ui-skin-ths",
   "wiring": {
     "id": "ui-skin-ths",
     "bundleWired": false

@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-pet",
+  "name": "@neystan/dsh-pet",
   "description": "鲸鱼娘宠物插件 for the dsh web GUI: a soft healing whale-girl companion with model-activity animations, petting/feeding interactions, shared affinity, and one validated custom-pet import slot",
   "version": "0.1.15",
   "type": "module",
@@ -89,6 +89,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

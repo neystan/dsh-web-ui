@@ -68,7 +68,7 @@ node scripts/dsh-plugin-new <name>   # 生成 packages/<name>/ 骨架
 
 ```sh
 node scripts/dsh-skin-new          # 生成 packages/skins/<id>/ 骨架
-pnpm --filter @linxin666/dsh-skins build   # 皮肤资产并入 dsh-skins
+pnpm --filter @neystan/dsh-skins build   # 皮肤资产并入 dsh-skins
 pnpm gallery:build                # 画廊产物
 ```
 

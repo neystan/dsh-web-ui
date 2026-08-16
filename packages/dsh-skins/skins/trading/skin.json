@@ -15,7 +15,7 @@
   ],
   "accent": "#f23645",
   "bodyAttr": "data-dsh-trading",
-  "package": "@linxin666/dsh-client-ui-skin-trading",
+  "package": "@neystan/dsh-client-ui-skin-trading",
   "wiring": {
     "id": "ui-skin-trading",
     "bundleWired": false

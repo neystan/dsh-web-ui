@@ -5,7 +5,7 @@
  * bound to the `describe-image` settings namespace through the family
  * settings bridge (or the official settings scope when the deployment
  * exposes the namespace directly).
- * @module @linxin666/dsh-tool-describe-image/client/DescribeImageSettingsCard
+ * @module @neystan/dsh-tool-describe-image/client/DescribeImageSettingsCard
  */
 
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'

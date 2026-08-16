@@ -39,11 +39,11 @@ browser half, live settings, no dsh source changes.
 
 ## Installation
 
-Install the family aggregate `@linxin666/dsh-web-ui-all` (all plugins and skins in one package), or this plugin alone:
+Install the family aggregate `@neystan/dsh-web-ui-all` (all plugins and skins in one package), or this plugin alone:
 
 ```sh
 # Recommended: install directly from npm
-dsh plugin --profile web add @linxin666/dsh-tool-describe-image
+dsh plugin --profile web add @neystan/dsh-tool-describe-image
 ```
 
 The aggregate mounts this plugin **without configuration**: loading is unaffected, and the first call
@@ -71,7 +71,7 @@ Configured mount example (profile `cordis.patch.yml` / composition file):
 
 ```yaml
 - id: describe-image
-  name: '@linxin666/dsh-tool-describe-image'
+  name: '@neystan/dsh-tool-describe-image'
   config:
     baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen-vl-max
@@ -82,7 +82,7 @@ Endpoints exposing only the Responses API set `apiStyle: responses`:
 
 ```yaml
 - id: describe-image
-  name: '@linxin666/dsh-tool-describe-image'
+  name: '@neystan/dsh-tool-describe-image'
   config:
     baseURL: https://api.openai.com/v1
     apiStyle: responses
@@ -122,7 +122,7 @@ attachment store); only the reference text enters the session log.
 
 - **Source**: ported from [whitelonng/dsh-plugin-describe-image](https://github.com/whitelonng/dsh-plugin-describe-image)
   (deepseek-harness `packages/vision/tool-describe-image`), moved in 2026-08; tests ported with the source
-  (`pnpm --filter @linxin666/dsh-tool-describe-image test`).
+  (`pnpm --filter @neystan/dsh-tool-describe-image test`).
 - **Copyright**: the original code belongs to its authors (deepseek-ai / whitelonng); this repository
   only hosts and maintains it and claims no copyright; the ported contribution is licensed by its
   contributor under the family license.

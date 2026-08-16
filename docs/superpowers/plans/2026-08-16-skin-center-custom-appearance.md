@@ -109,7 +109,7 @@ expect(Object.keys(deriveThemeTokens(valid))).toEqual([...THEME_TOKEN_ALLOWLIST]
 
 - [ ] **Step 2: Run the focused test and confirm it fails because the module does not exist.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
 
 - [ ] **Step 3: Implement the minimal pure module.** Use channel-wise linear interpolation and a single `toHex()` conversion so all derived colors are opaque `#RRGGBB`; clamp every ratio before mixing.
 
@@ -120,8 +120,8 @@ Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/theme.spe
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/theme.spec.ts
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/theme.spec.ts
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 6: Commit.**
@@ -182,7 +182,7 @@ expect(body.style.getPropertyPriority('--dsw-alias-bg-base')).toBe('important')
 
 - [ ] **Step 2: Run and observe the missing-module failure.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts`
 
 - [ ] **Step 3: Implement one controller and one snapshot store.** Capture `{ value, priority }` lazily before the first write, never replace the whole body `style` attribute, derive the current light/dark mode from `data-ds-dark-theme`, and observe only that attribute. Apply a draft only when its mode matches the page mode.
 
@@ -193,8 +193,8 @@ Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/custom-th
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 6: Commit.**
@@ -232,7 +232,7 @@ constructor(options: {
 
 - [ ] **Step 2: Run the focused tests and confirm the existing whole-style snapshot fails the latest-value assertion.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/try-on.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/try-on.spec.ts`
 
 - [ ] **Step 3: Replace whole-body-style restoration with property snapshots.** `ActiveVisuals` stores only the known skin backdrop properties, each as `{ value, priority }`. Retraction clears those properties; restoration writes only those properties. No code may call `body.setAttribute('style', snapshot)`.
 
@@ -240,7 +240,7 @@ Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/try-on.sp
 
 - [ ] **Step 5: Run the complete try-on suite.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/try-on.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/try-on.spec.ts`
 
 - [ ] **Step 6: Commit.**
 
@@ -290,7 +290,7 @@ export class BackgroundAssetStore {
 
 - [ ] **Step 2: Run and confirm the modules are missing.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/background-store.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/background-store.spec.ts`
 
 - [ ] **Step 3: Implement the parser and store.** Buffer at most `6 * 1024 * 1024` bytes, accept only valid WebP up to 2560 per edge and 6,553,600 pixels, hash the accepted bytes, write a random `.tmp-*` in the same directory, and rename to `<sha256>.webp`. Validate revision with `/^[a-f0-9]{64}$/` before any path construction; resolve/realpath and verify containment on reads.
 
@@ -316,8 +316,8 @@ export interface SkinCenterRoutesDeps {
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/background-store.spec.ts tests/routes.spec.ts
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/background-store.spec.ts tests/routes.spec.ts
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 8: Commit.**
@@ -366,7 +366,7 @@ export function uploadBackground(blob: Blob, fetcher?: typeof fetch): Promise<st
 
 - [ ] **Step 2: Run and observe the missing-module failure.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/image-upload.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/image-upload.spec.ts`
 
 - [ ] **Step 3: Implement the native codec.** Read only enough bytes for JPEG/PNG/WebP magic before decoding, use `createImageBitmap`, draw to an offscreen canvas preserving aspect ratio, and encode WebP with `canvas.toBlob`. Revoke previous preview URLs in the editor rather than retaining them globally.
 
@@ -377,8 +377,8 @@ Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/image-upl
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/image-upload.spec.ts
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/image-upload.spec.ts
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 6: Commit.**
@@ -429,7 +429,7 @@ Also mutate body style, `data-ds-dark-theme`, and direct children to prove the g
 
 - [ ] **Step 3: Run and confirm the current opacity-only controller fails.**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/background.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/background.spec.ts`
 
 - [ ] **Step 4: Implement one controller.** Keep a precise snapshot for body background properties, `--dsw-skin-scrim`, and any stable art node styles. `mode: 'skin'` restores skin-owned art and applies scrim; `custom` suppresses skin art and applies the stored revision URL; `none` suppresses both and removes scrim while retaining the numeric setting.
 
@@ -440,8 +440,8 @@ Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/backgroun
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/background.spec.ts
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/background.spec.ts
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 7: Commit.**
@@ -498,8 +498,8 @@ export function BackgroundEditor(props: {
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 ```
 
 - [ ] **Step 8: Inspect the built client bundle for accidental Node imports and obsolete controls.**
@@ -542,8 +542,8 @@ git commit -m "feat(skin-center): add compact appearance editors"
 Run:
 
 ```powershell
-pnpm --filter @linxin666/dsh-client-ui-skin-center test
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 pnpm skin-center:check
 ```
 
@@ -557,8 +557,8 @@ Run:
 
 ```powershell
 node scripts/skin-center-bundles
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
-pnpm --filter @linxin666/dsh-skins build
+pnpm --filter @neystan/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-skins build
 pnpm gallery:check
 pnpm aggregate:check
 pnpm typecheck

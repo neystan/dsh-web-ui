@@ -40,16 +40,16 @@ const REPO = process.env.DSH_SKIN_REPO || path.resolve(__dirname, '..')
 
 /** Skin registry: name -> package, cordis row id, symlink resolve target (all repo dirs). */
 const SKINS = {
-  qq98: { pkg: '@linxin666/dsh-client-ui-skin-qq98', id: 'ui-skin-qq98', dir: `${REPO}/packages/skins/qq98` },
-  ths: { pkg: '@linxin666/dsh-client-ui-skin-ths', id: 'ui-skin-ths', dir: `${REPO}/packages/skins/ths` },
-  xp: { pkg: '@linxin666/dsh-client-ui-skin-xp', id: 'ui-skin-xp', dir: `${REPO}/packages/skins/xp` },
-  'blue-fantasy': { pkg: '@linxin666/dsh-client-ui-skin-blue-fantasy', id: 'ui-skin-blue-fantasy', dir: `${REPO}/packages/skins/blue-fantasy` },
-  'dragon-heir': { pkg: '@linxin666/dsh-client-ui-skin-dragon-heir', id: 'ui-skin-dragon-heir', dir: `${REPO}/packages/skins/dragon-heir` },
-  minecraft: { pkg: '@linxin666/dsh-client-ui-skin-minecraft', id: 'ui-skin-minecraft', dir: `${REPO}/packages/skins/minecraft` },
-  'whale-song': { pkg: '@linxin666/dsh-client-ui-skin-whale-song', id: 'ui-skin-whale-song', dir: `${REPO}/packages/skins/whale-song` },
-  trading: { pkg: '@linxin666/dsh-client-ui-skin-trading', id: 'ui-skin-trading', dir: `${REPO}/packages/skins/trading` },
-  miku: { pkg: '@linxin666/dsh-client-ui-skin-miku', id: 'ui-skin-miku', dir: `${REPO}/packages/skins/miku` },
-  harbor: { pkg: '@linxin666/dsh-client-ui-skin-harbor', id: 'ui-skin-harbor', dir: `${REPO}/packages/skins/harbor` },
+  qq98: { pkg: '@neystan/dsh-client-ui-skin-qq98', id: 'ui-skin-qq98', dir: `${REPO}/packages/skins/qq98` },
+  ths: { pkg: '@neystan/dsh-client-ui-skin-ths', id: 'ui-skin-ths', dir: `${REPO}/packages/skins/ths` },
+  xp: { pkg: '@neystan/dsh-client-ui-skin-xp', id: 'ui-skin-xp', dir: `${REPO}/packages/skins/xp` },
+  'blue-fantasy': { pkg: '@neystan/dsh-client-ui-skin-blue-fantasy', id: 'ui-skin-blue-fantasy', dir: `${REPO}/packages/skins/blue-fantasy` },
+  'dragon-heir': { pkg: '@neystan/dsh-client-ui-skin-dragon-heir', id: 'ui-skin-dragon-heir', dir: `${REPO}/packages/skins/dragon-heir` },
+  minecraft: { pkg: '@neystan/dsh-client-ui-skin-minecraft', id: 'ui-skin-minecraft', dir: `${REPO}/packages/skins/minecraft` },
+  'whale-song': { pkg: '@neystan/dsh-client-ui-skin-whale-song', id: 'ui-skin-whale-song', dir: `${REPO}/packages/skins/whale-song` },
+  trading: { pkg: '@neystan/dsh-client-ui-skin-trading', id: 'ui-skin-trading', dir: `${REPO}/packages/skins/trading` },
+  miku: { pkg: '@neystan/dsh-client-ui-skin-miku', id: 'ui-skin-miku', dir: `${REPO}/packages/skins/miku` },
+  harbor: { pkg: '@neystan/dsh-client-ui-skin-harbor', id: 'ui-skin-harbor', dir: `${REPO}/packages/skins/harbor` },
 }
 /** Skins wired at the bundle layer already (no insert row needed here). Empty in the npm aggregate layout — no skin ships pre-wired; profile-installed skins are detected dynamically via bundleWiredFromProfile(). */
 const BUNDLE_WIRED = new Set()

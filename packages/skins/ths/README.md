@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-ths
+# @neystan/dsh-client-ui-skin-ths
 
 English | [中文](README.zh.md)
 
@@ -8,13 +8,13 @@ The skin is presentation-only: no services are injected, no cordis events are em
 
 ## Installing (official bundle)
 
-Prefer the family aggregate package `@linxin666/dsh-skins` — every skin at once; for this skin alone, install with `link:`:
+Prefer the family aggregate package `@neystan/dsh-skins` — every skin at once; for this skin alone, install with `link:`:
 
 ```sh
 # All skins (recommended)
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # Or just this skin
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-ths
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-ths
 # Activate: dsh-skin use ths
 # From the repo (dev): dsh plugin --profile web add link:$(pwd)/packages/skins/ths
 ```

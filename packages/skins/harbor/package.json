@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-harbor",
+  "name": "@neystan/dsh-client-ui-skin-harbor",
   "description": "Hot-pluggable 夕港 (harbor) skin for the dsh web GUI: dusk-harbor art backdrop with live theme scrim, deep navy surfaces with amber-orange accents, translucent panes",
   "version": "0.1.14",
   "type": "module",
@@ -46,6 +46,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

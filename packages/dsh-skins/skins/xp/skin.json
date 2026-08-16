@@ -14,7 +14,7 @@
   ],
   "accent": "#316ac5",
   "bodyAttr": "data-dsh-xp",
-  "package": "@linxin666/dsh-client-ui-skin-xp",
+  "package": "@neystan/dsh-client-ui-skin-xp",
   "wiring": {
     "id": "ui-skin-xp",
     "bundleWired": false

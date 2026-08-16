@@ -14,7 +14,7 @@
  * workspace assets live in packages/skins/<id>). The skin registry is
  * derived from each packages/skins/<id>/skin.json instead of a hand-written
  * dictionary, so adding a skin needs no code change here.
- * @module @linxin666/dsh-client-ui-skin-center/skin-switch
+ * @module @neystan/dsh-client-ui-skin-center/skin-switch
  */
 
 import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, readlinkSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -23,7 +23,7 @@ import { basename, dirname, join as joinPath, resolve as resolvePath, sep } from
 import { fileURLToPath } from 'node:url'
 
 /**
- * Walk up from a file location to the nearest @linxin666/ scoped dir
+ * Walk up from a file location to the nearest @neystan/ scoped dir
  * whose entries actually hold skin packages (dsh-skins carrier or
  * dsh-client-ui-skin-* packages). pnpm's virtual store realpaths packages
  * into node_modules/.pnpm/<pkg>@<ver>/node_modules/<name>, so a plain
@@ -35,7 +35,7 @@ import { fileURLToPath } from 'node:url'
 export function findScopedAnchor(fromDir: string): string | null {
   let current = fromDir
   for (;;) {
-    const scoped = joinPath(current, '@linxin666')
+    const scoped = joinPath(current, '@neystan')
     try {
       for (const entry of readdirSync(scoped)) {
         // A real skin home: the dsh-skins carrier or per-skin packages.
@@ -56,8 +56,8 @@ export function findScopedAnchor(fromDir: string): string | null {
  * Resolve the directory that holds the skin packages (each a dir carrying a
  * skin.json). Candidates, in order:
  *  - monorepo / flat npm layout: new URL('../../', import.meta.url)
- *    (packages/skins/ or node_modules/@linxin666/);
- *  - pnpm virtual-store layout: the nearest @linxin666/ scoped dir found by
+ *    (packages/skins/ or node_modules/@neystan/);
+ *  - pnpm virtual-store layout: the nearest @neystan/ scoped dir found by
  *    walking up from this package's realpathed location;
  *  - the legacy '../../../skins/' spelling (which pointed at
  *    node_modules/skins/ under npm — the ENOENT of
@@ -143,8 +143,8 @@ function readSkinMeta(absDir: string): { id: string; package: string; wiring: { 
 /**
  * Enumerate every candidate skin directory under a skins root. Two shapes:
  *  - direct subdirectories carrying a skin.json (monorepo packages/skins/<id>,
- *    and per-skin npm packages @linxin666/dsh-client-ui-skin-<id>);
- *  - the bundled-skins carrier: @linxin666/dsh-skins/skins/<id> (skin assets
+ *    and per-skin npm packages @neystan/dsh-client-ui-skin-<id>);
+ *  - the bundled-skins carrier: @neystan/dsh-skins/skins/<id> (skin assets
  *    shipped inside the dsh-skins aggregate so npm needs no per-skin
  *    package names). Directories without a skin.json are skipped.
  * @param skinsDir - the skins root.
@@ -170,7 +170,7 @@ export function listSkinDirCandidates(skinsDir: string): string[] {
     const candidate = joinPath(skinsDir, dir)
     // Skip symlink entries: statSync follows links, so the profile
     // symlinks that ensureSymlink previously managed (e.g.
-    // node_modules/@linxin666/dsh-skins -> real dir) would otherwise be
+    // node_modules/@neystan/dsh-skins -> real dir) would otherwise be
     // mis-registered as skin candidates under the link path itself,
     // poisoning entry.dir and letting ensureSymlink build a
     // self-referential link (issue #43, ELOOP). Only real dirs are skin
@@ -265,7 +265,7 @@ export function wiredNames(registry: Record<string, SkinSwitchEntry>): Set<strin
 /**
  * Drop legacy hand-written skin rows (insert rows with a name) and old touch
  * comments. The CLI regex matched the historical @deepseek-ai scope; this
- * also matches the current @linxin666 scope so stale rows are always cleaned.
+ * also matches the current @neystan scope so stale rows are always cleaned.
  * @param patch - raw patch file text.
  */
 export function stripLegacySkinRows(patch: string): string {
@@ -682,7 +682,7 @@ function writePatchAtomic(filePath: string, next: string): void {
  * link was created, false when the target was already resolvable.
  *
  * A target that already resolves (a REAL installed directory, e.g. the npm
- * layout where the skin package sits at node_modules/@linxin666/..., or a
+ * layout where the skin package sits at node_modules/@neystan/..., or a
  * symlink/junction pointing at the skin dir) is left untouched — there is
  * nothing to link. Only an existing link pointing elsewhere is refreshed.
  * A plain FILE target is still refused (that path is not ours to clobber).

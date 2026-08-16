@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-web-ui-settings",
+  "name": "@neystan/dsh-client-ui-web-ui-settings",
   "description": "Web UI plugin group for the dsh settings page: one card that hosts the dsh-web-ui family plugins' enable switches and configuration forms.",
   "version": "0.1.15",
   "type": "module",
@@ -62,6 +62,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

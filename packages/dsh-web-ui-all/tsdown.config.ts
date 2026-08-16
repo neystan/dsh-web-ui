@@ -5,4 +5,4 @@
  */
 import { clientBundle } from '../../shared/tsdown.client.ts'
 
-export default clientBundle('@linxin666/dsh-web-ui-all', ['src/index.ts'])
+export default clientBundle('@neystan/dsh-web-ui-all', ['src/index.ts'])

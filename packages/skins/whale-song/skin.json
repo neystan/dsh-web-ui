@@ -15,7 +15,7 @@
   ],
   "accent": "#4d8fd4",
   "bodyAttr": "data-dsh-whale-song",
-  "package": "@linxin666/dsh-client-ui-skin-whale-song",
+  "package": "@neystan/dsh-client-ui-skin-whale-song",
   "wiring": {
     "id": "ui-skin-whale-song",
     "bundleWired": false

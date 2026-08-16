@@ -37,11 +37,11 @@ OpenAI 兼容的视觉模型端点（Qwen-VL、GLM-4V、GPT-4o、本地 Ollama �
 
 ## 安装
 
-推荐直接安装全家桶聚合包 `@linxin666/dsh-web-ui-all`（一个包装齐全部功能插件与皮肤），或单独安装本插件：
+推荐直接安装全家桶聚合包 `@neystan/dsh-web-ui-all`（一个包装齐全部功能插件与皮肤），或单独安装本插件：
 
 ```sh
 # 推荐：直接从 npm 安装
-dsh plugin --profile web add @linxin666/dsh-tool-describe-image
+dsh plugin --profile web add @neystan/dsh-tool-describe-image
 ```
 
 聚合包默认**无配置挂载**本插件：加载不受影响，首次调用会以清晰的错误提示
@@ -68,7 +68,7 @@ dsh plugin --profile web add @linxin666/dsh-tool-describe-image
 
 ```yaml
 - id: describe-image
-  name: '@linxin666/dsh-tool-describe-image'
+  name: '@neystan/dsh-tool-describe-image'
   config:
     baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
     model: qwen-vl-max
@@ -79,7 +79,7 @@ dsh plugin --profile web add @linxin666/dsh-tool-describe-image
 
 ```yaml
 - id: describe-image
-  name: '@linxin666/dsh-tool-describe-image'
+  name: '@neystan/dsh-tool-describe-image'
   config:
     baseURL: https://api.openai.com/v1
     apiStyle: responses
@@ -114,7 +114,7 @@ DSH 输入框对纯文本模型没有图片入口，因此在输入框里拖拽�
 
 - **来源**：本包移植自 [whitelonng/dsh-plugin-describe-image](https://github.com/whitelonng/dsh-plugin-describe-image)
   （deepseek-harness `packages/vision/tool-describe-image`），2026-08 迁入，测试随源码一并移植
-  （`pnpm --filter @linxin666/dsh-tool-describe-image test`）。
+  （`pnpm --filter @neystan/dsh-tool-describe-image test`）。
 - **版权**：原代码版权归原作者（deepseek-ai / whitelonng）所有，本仓库仅托管与维护，不主张版权；
   贡献移植部分由贡献者授权以全家桶许可证发布。
 - **许可证**：全家桶以 [Apache-2.0](../../LICENSE) 授权（见仓库根 LICENSE），本包 license 字段为 `Apache-2.0`。

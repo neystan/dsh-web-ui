@@ -11,7 +11,7 @@
  * configuration (the dsh-web-ui-all aggregate does this), so endpoint/model validation happens per
  * call — or eagerly at load when a composition entry actually configures it. The "Image
  * understanding" settings section can fill the fields live from Settings → 插件配置.
- * @module @linxin666/dsh-tool-describe-image
+ * @module @neystan/dsh-tool-describe-image
  */
 
 import type { Context } from '@deepseek-ai/cordis'

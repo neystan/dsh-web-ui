@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-trading
+# @neystan/dsh-client-ui-skin-trading
 
 English | [中文](README.zh.md)
 
@@ -38,14 +38,14 @@ reaches a model request. The dark palette
 
 ## Installing (official bundle)
 
-Prefer the family aggregate package `@linxin666/dsh-skins` — every skin at
+Prefer the family aggregate package `@neystan/dsh-skins` — every skin at
 once; for this skin alone, install with `link:`:
 
 ```sh
 # All skins (recommended)
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # Or just this skin
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-trading
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-trading
 # Activate: dsh-skin use trading
 # From the repo (dev): dsh plugin --profile web add link:$(pwd)/packages/skins/trading
 ```

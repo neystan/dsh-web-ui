@@ -7,7 +7,7 @@
  * animation decision, and a one-shot "celebration" window after `done` so the
  * pet visibly jumps before settling back to idle. Everything here is a pure
  * function of (input, nowMs); persistence and RPC live in the service.
- * @module @linxin666/dsh-pet/state
+ * @module @neystan/dsh-pet/state
  */
 
 /** Activity phases understood by the pet host. */

@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-minecraft
+# @neystan/dsh-client-ui-skin-minecraft
 
 [English](README.md) | 中文
 
@@ -10,13 +10,13 @@ dsh web GUI 的体素化皮肤，按 Minecraft 主菜单风格打扮：一幅程
 
 ## 安装（官方 bundle 方式）
 
-推荐先装皮肤全家桶聚合包 `@linxin666/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
+推荐先装皮肤全家桶聚合包 `@neystan/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
 
 ```sh
 # All skins (recommended)
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # Or just this skin
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-minecraft
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-minecraft
 # Activate: dsh-skin use minecraft
 # From the repo (dev): dsh plugin --profile web add link:$(pwd)/packages/skins/minecraft
 ```
@@ -38,7 +38,7 @@ pnpm test    # vitest: apply/dispose contract spec
 
 ```sh
 node scripts/skin-center-bundles    # re-embed this skin into skin-center's registry
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 node scripts/gallery-build          # refresh the gallery manifest/bundles
 node scripts/capture-previews       # re-shoot preview/light.png + preview/dark.png
 ```

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { manifestHasSkin } from '../src/client/manifest.ts'
 
 /** A served document with only the skin-center plugin enabled (stock look). */
-const STOCK = '<html><script>window.__DSH_BOOT__={"entries":[{"id":"ui-skin-center","url":"/plugins/@linxin666/dsh-client-ui-skin-center/client.js?rev=abc"}]}</script></html>'
+const STOCK = '<html><script>window.__DSH_BOOT__={"entries":[{"id":"ui-skin-center","url":"/plugins/@neystan/dsh-client-ui-skin-center/client.js?rev=abc"}]}</script></html>'
 
 /** The same document with one skin entry enabled as well. */
 const WITH_QQ98 = STOCK.replace(
   '</script>',
-  ',{"id":"ui-skin-qq98","url":"/plugins/@linxin666/dsh-client-ui-skin-qq98/client.js?rev=def"}</script>',
+  ',{"id":"ui-skin-qq98","url":"/plugins/@neystan/dsh-client-ui-skin-qq98/client.js?rev=def"}</script>',
 )
 
 describe('manifestHasSkin', () => {

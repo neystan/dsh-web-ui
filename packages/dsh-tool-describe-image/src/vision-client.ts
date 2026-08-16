@@ -5,7 +5,7 @@
  * back the single text answer — with a short-lifetime, capacity-capped semantic
  * cache so repeat calls for the same image and prompt avoid a second round trip.
  * Response bodies and error excerpts are capped before any bytes are trusted.
- * @module @linxin666/dsh-tool-describe-image/vision
+ * @module @neystan/dsh-tool-describe-image/vision
  */
 
 import { readFile, stat } from 'node:fs/promises'

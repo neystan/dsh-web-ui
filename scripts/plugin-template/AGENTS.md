@@ -11,7 +11,7 @@ packages/AGENTS.md 的全局/包级规则。
 ## 提交前检查
 
 ```sh
-pnpm --filter @linxin666/dsh-client-ui-__NAME__ typecheck
-pnpm --filter @linxin666/dsh-client-ui-__NAME__ test
-pnpm --filter @linxin666/dsh-client-ui-__NAME__ build
+pnpm --filter @neystan/dsh-client-ui-__NAME__ typecheck
+pnpm --filter @neystan/dsh-client-ui-__NAME__ test
+pnpm --filter @neystan/dsh-client-ui-__NAME__ build
 ```

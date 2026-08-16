@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-	id: "@linxin666/dsh-web-ui-all",
+	id: "@neystan/dsh-web-ui-all",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;

@@ -7,7 +7,7 @@
  */
 import { clientBundle } from '../../shared/tsdown.client.ts'
 
-export default clientBundle('@linxin666/dsh-client-ui-web-ui-settings', ['src/index.ts'], {
+export default clientBundle('@neystan/dsh-client-ui-web-ui-settings', ['src/index.ts'], {
   libExternal: [
     '@deepseek-ai/dsh-api-remotes',
     '@deepseek-ai/dsh-client-connection',

@@ -5,7 +5,7 @@
  * persists the bytes in the attachment store, and returns the
  * `[image attachment …]` note text to splice into the composer draft.
  * Image bytes never enter the conversation log — only the note text does.
- * @module @linxin666/dsh-tool-describe-image/client/attach
+ * @module @neystan/dsh-tool-describe-image/client/attach
  */
 
 /** The host attach endpoint, same-origin with the web shell. */

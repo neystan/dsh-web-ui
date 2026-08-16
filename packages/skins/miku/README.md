@@ -48,7 +48,7 @@ dsh plugin --profile web add "link:<absolute path to this repo>"
   pnpm add "link:<absolute path to this repo>"
   ```
 
-  Then append `@linxin666/dsh-client-ui-skin-miku` to the `dsh.profile.bundles` array in `~/.dsh/profiles/web/package.json`.
+  Then append `@neystan/dsh-client-ui-skin-miku` to the `dsh.profile.bundles` array in `~/.dsh/profiles/web/package.json`.
 
 - After installing, restart `dsh web` and hard-refresh the page (Ctrl+Shift+R).
 

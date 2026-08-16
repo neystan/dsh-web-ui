@@ -6,7 +6,7 @@
  * The client half therefore mounts this entry straight onto `document.body`
  * (see index.ts): while visible it renders the floating WhalePet (a portal),
  * while hidden it renders a fixed-position summon button.
- * @module @linxin666/dsh-pet/client/PetDockEntry
+ * @module @neystan/dsh-pet/client/PetDockEntry
  */
 
 import { useEffect, useSyncExternalStore, type ReactElement } from 'react'

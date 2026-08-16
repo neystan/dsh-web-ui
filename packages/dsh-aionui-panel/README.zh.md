@@ -6,11 +6,11 @@
 
 ## 安装
 
-推荐直接安装全家桶聚合包 `@linxin666/dsh-web-ui-all`（一个包装齐全部功能插件与皮肤），或单独安装本插件：
+推荐直接安装全家桶聚合包 `@neystan/dsh-web-ui-all`（一个包装齐全部功能插件与皮肤），或单独安装本插件：
 
 ```sh
 ### 从 npm 安装（推荐）
-dsh plugin --profile web add @linxin666/dsh-client-ui-aionui-panel
+dsh plugin --profile web add @neystan/dsh-client-ui-aionui-panel
 
 ### 从仓库安装（开发调试）
 git clone https://github.com/zhu1090093659/dsh-web-ui.git

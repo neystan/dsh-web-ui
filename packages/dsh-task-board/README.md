@@ -37,11 +37,11 @@ tests/*.spec.ts                             # vitest: domain, store, scheduler, 
 
 ## Install
 
-Install the family aggregate `@linxin666/dsh-web-ui-all` or this plugin alone:
+Install the family aggregate `@neystan/dsh-web-ui-all` or this plugin alone:
 
 ```sh
 # from npm
-dsh plugin --profile web add @linxin666/dsh-client-ui-task-board
+dsh plugin --profile web add @neystan/dsh-client-ui-task-board
 
 # from the repo (development)
 git clone https://github.com/neystan/dsh-web-ui.git
@@ -55,9 +55,9 @@ Restart `dsh web` after installing (a page refresh is not enough).
 ## Build & test
 
 ```sh
-pnpm --filter @linxin666/dsh-client-ui-task-board typecheck
-pnpm --filter @linxin666/dsh-client-ui-task-board test
-pnpm --filter @linxin666/dsh-client-ui-task-board build   # lib/index.js + lib/client.js
+pnpm --filter @neystan/dsh-client-ui-task-board typecheck
+pnpm --filter @neystan/dsh-client-ui-task-board test
+pnpm --filter @neystan/dsh-client-ui-task-board build   # lib/index.js + lib/client.js
 ```
 
 ## Data & workspaces

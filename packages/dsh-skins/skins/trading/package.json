@@ -1,7 +1,7 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-trading",
+  "name": "@neystan/dsh-client-ui-skin-trading",
   "version": "0.1.15",
-  "description": "Bundled skin inside @linxin666/dsh-skins (@linxin666/dsh-client-ui-skin-trading).",
+  "description": "Bundled skin inside @neystan/dsh-skins (@neystan/dsh-client-ui-skin-trading).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

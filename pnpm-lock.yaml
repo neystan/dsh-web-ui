@@ -234,7 +234,7 @@ importers:
 
   packages/dsh-skins:
     dependencies:
-      '@linxin666/dsh-client-ui-skin-center':
+      '@neystan/dsh-client-ui-skin-center':
         specifier: workspace:*
         version: link:../skins/skin-center
 
@@ -392,28 +392,28 @@ importers:
 
   packages/dsh-web-ui-all:
     dependencies:
-      '@linxin666/dsh-client-ui-aionui-panel':
+      '@neystan/dsh-client-ui-aionui-panel':
         specifier: workspace:*
         version: link:../dsh-aionui-panel
-      '@linxin666/dsh-client-ui-git-graph':
+      '@neystan/dsh-client-ui-git-graph':
         specifier: workspace:*
         version: link:../dsh-git-graph
-      '@linxin666/dsh-client-ui-skin-center':
+      '@neystan/dsh-client-ui-skin-center':
         specifier: workspace:*
         version: link:../skins/skin-center
-      '@linxin666/dsh-client-ui-task-board':
+      '@neystan/dsh-client-ui-task-board':
         specifier: workspace:*
         version: link:../dsh-task-board
-      '@linxin666/dsh-client-ui-web-ui-settings':
+      '@neystan/dsh-client-ui-web-ui-settings':
         specifier: workspace:*
         version: link:../dsh-web-ui-settings
-      '@linxin666/dsh-pet':
+      '@neystan/dsh-pet':
         specifier: workspace:*
         version: link:../dsh-pet
-      '@linxin666/dsh-skins':
+      '@neystan/dsh-skins':
         specifier: workspace:*
         version: link:../dsh-skins
-      '@linxin666/dsh-tool-describe-image':
+      '@neystan/dsh-tool-describe-image':
         specifier: workspace:*
         version: link:../dsh-tool-describe-image
 

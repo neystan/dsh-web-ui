@@ -4,7 +4,7 @@
  * snapshots, marking dirty so the owning facade decides when to flush. Read
  * paths (view) no longer settle the economy; settlements happen on explicit
  * economic events: completed-turn rewards (official or legacy) and feeds.
- * @module @linxin666/dsh-pet/ledger
+ * @module @neystan/dsh-pet/ledger
  */
 
 import {

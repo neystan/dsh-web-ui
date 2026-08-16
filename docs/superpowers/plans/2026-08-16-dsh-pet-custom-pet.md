@@ -113,7 +113,7 @@ export interface PetAssetManifest {
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/core/pet-assets.test.ts
+pnpm --filter @neystan/dsh-pet exec vitest run src/core/pet-assets.test.ts
 ```
 
 Expected: FAIL because `src/core/pet-assets.ts` does not exist.
@@ -149,8 +149,8 @@ Remove duplicated geometry and frame-count literals from `src/client/spritesheet
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/core/pet-assets.test.ts
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run src/core/pet-assets.test.ts
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS. The official manifest and WebP must pass the same contract used for custom assets.
@@ -193,7 +193,7 @@ expect(ledger.takeDirty()).toBe(true)
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/persist.test.ts src/ledger.test.ts
+pnpm --filter @neystan/dsh-pet exec vitest run src/persist.test.ts src/ledger.test.ts
 ```
 
 Expected: FAIL because `appearance` and `setAppearance` do not exist.
@@ -221,7 +221,7 @@ Implement `setAppearance` with the same immutable snapshot pattern as `setName` 
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/persist.test.ts src/ledger.test.ts
+pnpm --filter @neystan/dsh-pet exec vitest run src/persist.test.ts src/ledger.test.ts
 ```
 
 Expected: PASS.
@@ -279,7 +279,7 @@ export interface PreparedPetPromotion {
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/pet-asset-store.test.ts
+pnpm --filter @neystan/dsh-pet exec vitest run src/pet-asset-store.test.ts
 ```
 
 Expected: FAIL because the store module does not exist.
@@ -303,8 +303,8 @@ At startup, recovery must be deterministic: for an unfinished promotion, keep a 
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/pet-asset-store.test.ts src/core/pet-assets.test.ts
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run src/pet-asset-store.test.ts src/core/pet-assets.test.ts
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS with no files left outside the fixed current/candidate layout after each successful operation.
@@ -361,7 +361,7 @@ export interface PetAppearanceView {
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run tests/service-enabled.spec.ts tests/routes.spec.ts
+pnpm --filter @neystan/dsh-pet exec vitest run tests/service-enabled.spec.ts tests/routes.spec.ts
 ```
 
 Expected: FAIL because appearance service methods and routes do not exist.
@@ -403,8 +403,8 @@ Refactor the JSON reader to accept a limit argument. Use 12 MiB only for import 
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run tests/routes.spec.ts tests/service-enabled.spec.ts src/persist.test.ts src/pet-asset-store.test.ts
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run tests/routes.spec.ts tests/service-enabled.spec.ts src/persist.test.ts src/pet-asset-store.test.ts
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS. The disabled-state test must prove the management GET and import path remain callable.
@@ -442,7 +442,7 @@ For both locale prompts assert all nine action names, `[6, 8, 8, 4, 5, 8, 6, 6, 
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/pet-image-validation.test.ts src/client/generation-prompt.test.ts
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/pet-image-validation.test.ts src/client/generation-prompt.test.ts
 ```
 
 Expected: FAIL because both client modules are missing.
@@ -481,8 +481,8 @@ Build Chinese and English strings from the shared constants; do not duplicate ge
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/pet-image-validation.test.ts src/client/generation-prompt.test.ts
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/pet-image-validation.test.ts src/client/generation-prompt.test.ts
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS.
@@ -516,7 +516,7 @@ Render with the official descriptor, resolve its manifest/image mocks, then rere
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/WhalePet.test.tsx
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/WhalePet.test.tsx
 ```
 
 Expected: FAIL because `WhalePet` still uses fixed official URLs and accepts no asset descriptor.
@@ -536,8 +536,8 @@ Add `asset` to the state API type and pass it from the current root/dock compone
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/WhalePet.test.tsx tests/service-enabled.spec.ts
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/WhalePet.test.tsx tests/service-enabled.spec.ts
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS; existing animations and interactions retain their prior assertions.
@@ -578,7 +578,7 @@ Assert accessible names rather than CSS hashes. Stub the host API, file decoder,
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/PetAppearanceField.test.tsx
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/PetAppearanceField.test.tsx
 ```
 
 Expected: FAIL because the appearance field does not exist.
@@ -629,9 +629,9 @@ Add bilingual labels and one localized string per stable error code. Never inter
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet exec vitest run src/client/PetAppearanceField.test.tsx src/client/WhalePet.test.tsx
-pnpm --filter @linxin666/dsh-pet test
-pnpm --filter @linxin666/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet exec vitest run src/client/PetAppearanceField.test.tsx src/client/WhalePet.test.tsx
+pnpm --filter @neystan/dsh-pet test
+pnpm --filter @neystan/dsh-pet typecheck
 ```
 
 Expected: PASS. The package-wide test run must keep all existing persistence, economy, service, state, and pet-interaction tests green.
@@ -678,9 +678,9 @@ Expected: `packages/dsh-pet/README.i18n.yaml` is updated for the synchronized En
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-pet test
-pnpm --filter @linxin666/dsh-pet typecheck
-pnpm --filter @linxin666/dsh-pet build
+pnpm --filter @neystan/dsh-pet test
+pnpm --filter @neystan/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet build
 git diff --check
 ```
 

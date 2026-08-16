@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-`@linxin666/dsh-client-ui-skin-center` (cordis plugin id `ui-skin-center`) embeds the skin list / try-on / apply into the plugin configuration page of the real dsh Web GUI, as a card in the "Web UI plugins" group (settings → plugin config → Web UI plugins → 皮肤中心 / Skin Center), sharing the same slot (`web-ui.plugin.item`) as the family plugins such as task-board / pet / live-stats, without taking a top-level settings nav item.
+`@neystan/dsh-client-ui-skin-center` (cordis plugin id `ui-skin-center`) embeds the skin list / try-on / apply into the plugin configuration page of the real dsh Web GUI, as a card in the "Web UI plugins" group (settings → plugin config → Web UI plugins → 皮肤中心 / Skin Center), sharing the same slot (`web-ui.plugin.item`) as the family plugins such as task-board / pet / live-stats, without taking a top-level settings nav item.
 
 - List: shows the separate stock "官方默认" (official default) entry plus 11 themes: 10 bundled skins and one custom theme. Every theme uses the same card, Try on / Apply controls, active marker, tagline, and accent swatch; the custom card adds Edit.
 - Try-on: clicking "Try on" loads a bundled skin's client bundle on demand — the host route `/api/skin-center/bundle/<id>` serves `lib/client.js` as a same-origin script (the same mechanism the core uses to load plugins), the factory registers with the page's own `window.__ModuleLoader__`, and `window.__DSH_MODULES__.import` materializes it (a real loader, not a simulator and no eval). Official and custom themes use the same surface lifecycle without loading a user bundle. The look changes immediately without refreshing; "Exit try-on" restores the previous styles, DOM, favicon, title, body inline styles, custom tokens, and background.
@@ -13,13 +13,13 @@ English | [中文](README.zh.md)
 
 ## Install (official plugin bundle)
 
-Install the family skin aggregate package `@linxin666/dsh-skins` first (all skins plus the skin center in one); for this package alone use the `link:` commands below.
+Install the family skin aggregate package `@neystan/dsh-skins` first (all skins plus the skin center in one); for this package alone use the `link:` commands below.
 
 ```sh
 # All skins (recommended)
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # Or just the skin center
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-center
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-center
 # From the repo (dev): dsh plugin --profile web add link:$(pwd)/packages/skins/skin-center
 ```
 
@@ -75,7 +75,7 @@ node scripts/skin-center-bundles
 
 # 2. Build in the repo
 cd ~/code/dsh-web-ui && export NPM_TOKEN='<token>'   # if private-scope auth is still required
-pnpm --filter @linxin666/dsh-client-ui-skin-center run bundle
+pnpm --filter @neystan/dsh-client-ui-skin-center run bundle
 ```
 
 ## Install (personal environment wiring, not committed to the checkout)
@@ -83,12 +83,12 @@ pnpm --filter @linxin666/dsh-client-ui-skin-center run bundle
 ```sh
 # 1. profile symlink (same as qq98/blue-fantasy)
 ln -sfn ~/code/dsh-web-ui/packages/skins/skin-center \
-  ~/.dsh/profiles/node_modules/@linxin666/dsh-client-ui-skin-center
+  ~/.dsh/profiles/node_modules/@neystan/dsh-client-ui-skin-center
 
 # 2. add to ~/.dsh/cordis.patch.yml (outside the dsh-skin managed section, do not touch that section):
 #   - insert:
 #       - id: ui-skin-center
-#         name: '@linxin666/dsh-client-ui-skin-center'
+#         name: '@neystan/dsh-client-ui-skin-center'
 
 # 3. the config watcher hot-loads in seconds; refresh the page to see the skin-center card in 插件配置 → Web UI 插件
 ```

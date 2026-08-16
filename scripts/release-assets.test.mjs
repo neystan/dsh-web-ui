@@ -43,14 +43,14 @@ test('packOne: packs the exact published version and resolves the tarball path',
     calls.push({ file, args, options })
     return JSON.stringify([{ filename: 'linxin666-dsh-pet-0.1.15.tgz' }])
   }
-  const out = packOne('@linxin666/dsh-pet', '0.1.15', '/tmp/assets', fakeRun)
+  const out = packOne('@neystan/dsh-pet', '0.1.15', '/tmp/assets', fakeRun)
   assert.deepEqual(calls[0].args, [
-    'pack', '@linxin666/dsh-pet@0.1.15', '--pack-destination', '/tmp/assets', '--json',
+    'pack', '@neystan/dsh-pet@0.1.15', '--pack-destination', '/tmp/assets', '--json',
   ])
   assert.equal(out, join('/tmp/assets', 'linxin666-dsh-pet-0.1.15.tgz'))
 })
 
 test('packOne: rejects when npm pack reports no filename', () => {
   const fakeRun = () => JSON.stringify([])
-  assert.throws(() => packOne('@linxin666/dsh-pet', '0.1.15', '/tmp/assets', fakeRun), /no filename/)
+  assert.throws(() => packOne('@neystan/dsh-pet', '0.1.15', '/tmp/assets', fakeRun), /no filename/)
 })

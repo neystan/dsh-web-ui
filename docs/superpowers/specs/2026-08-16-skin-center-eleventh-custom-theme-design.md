@@ -144,11 +144,11 @@ Client 测试覆盖：
 更新 skin-center 测试及中英文 README，重新生成 client bundle，并构建 `packages/dsh-skins` 聚合产物。至少运行：
 
 ```text
-pnpm --filter @linxin666/dsh-client-ui-skin-center test
-pnpm --filter @linxin666/dsh-client-ui-skin-center typecheck
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test
+pnpm --filter @neystan/dsh-client-ui-skin-center typecheck
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 pnpm skin-center:check
-pnpm --filter @linxin666/dsh-skins build
+pnpm --filter @neystan/dsh-skins build
 pnpm docs:check
 ```
 

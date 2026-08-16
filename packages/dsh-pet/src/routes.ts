@@ -4,7 +4,7 @@
  * from `/pet/whale/*`. The `/plugins/` endpoint only serves client bundles
  * and RPC domains are platform-registered, so the pet serves its own API
  * and media — the same pattern as the family RPC domains.
- * @module @linxin666/dsh-pet/routes
+ * @module @neystan/dsh-pet/routes
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'

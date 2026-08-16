@@ -16,7 +16,7 @@
 
 - 皮肤启用互斥由 `dsh-skin use` 管理（`~/.dsh/cordis.patch.yml` 的 managed
   区段），因此**皮肤只进 `skins/` 资产，不进 `patchFrom`**。
-- 改任何皮肤后必须重跑 `pnpm --filter @linxin666/dsh-skins build`，否则 npm 安装
+- 改任何皮肤后必须重跑 `pnpm --filter @neystan/dsh-skins build`，否则 npm 安装
   aggregate 后 useSkin 的 insert 行无法 resolve（MODULE_NOT_FOUND）。
 
 ## 构建产物确定性
@@ -27,6 +27,6 @@
 ## 提交前检查
 
 ```sh
-pnpm --filter @linxin666/dsh-skins build
+pnpm --filter @neystan/dsh-skins build
 pnpm gallery:check
 ```

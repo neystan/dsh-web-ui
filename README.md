@@ -8,6 +8,10 @@ dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务
 
 ![DSH Web UI 主界面](docs/screenshots/13-hero-main.png)
 
+## 原作者与致谢
+
+本项目 fork 自 [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（npm 包名 `@linxin666/*`），原始版权归原作者 zhu1090093659 所有，各包 LICENSE 均保留原版权声明。本 fork 由 neystan 维护，包名改为 `@neystan/*`。
+
 ## 功能插件
 
 ### 任务看板
@@ -95,23 +99,23 @@ DSH 插件通过 `dsh plugin` 命令安装进 **profile**（`dsh web` 对应 `we
 
 ### 方式一：从 npm 安装（推荐）
 
-插件已发布到 npm（`@linxin666` scope），一条命令装齐：
+插件已发布到 npm（`@neystan` scope），一条命令装齐：
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-web-ui-all
+dsh plugin --profile web add @neystan/dsh-web-ui-all
 ```
 
-装完重启 `dsh web`，侧边栏即可看到全部插件入口。只想用皮肤则装 `@linxin666/dsh-skins`。
+装完重启 `dsh web`，侧边栏即可看到全部插件入口。只想用皮肤则装 `@neystan/dsh-skins`。
 
-> pnpm 的严格（isolated）布局只把聚合包放在 profile 顶层，patch 行引用的 11 个子包（共 12 行 insert）会被收进嵌套目录，`dsh web` 会报 `Cannot find package '@linxin666/dsh-...'`。本包的子包已声明为 dependencies；使用严格布局时，在 profile 的 `pnpm-workspace.yaml` 加 `nodeLinker: hoisted`（或旧式 `public-hoist-pattern: ['@linxin666/*']`），再重新安装即可。
+> pnpm 的严格（isolated）布局只把聚合包放在 profile 顶层，patch 行引用的 11 个子包（共 12 行 insert）会被收进嵌套目录，`dsh web` 会报 `Cannot find package '@neystan/dsh-...'`。本包的子包已声明为 dependencies；使用严格布局时，在 profile 的 `pnpm-workspace.yaml` 加 `nodeLinker: hoisted`（或旧式 `public-hoist-pattern: ['@neystan/*']`），再重新安装即可。
 
 > 首次安装若提示 `ERR_PNPM_IGNORED_BUILDS`（pnpm 拒绝依赖的构建脚本），按提示把 `cloudflared` / `cpu-features` / `ssh2` 加入 profile 的 `pnpm-workspace.yaml` `allowBuilds` 后重新执行即可。
 
-> **pnpm 11 release-age 门禁**：新版本发布后约 10 天内，pnpm 11 的 `minimumReleaseAge` 门禁可能静默装回更旧的 `@linxin666/*` 版本（如 `dsh-web-ui-all@0.1.5` 配旧版皮肤中心）。旧版皮肤中心 Apply 皮肤时会写入独立皮肤包引用，导致 `dsh web` 启动崩溃（`ERR_MODULE_NOT_FOUND ... dsh-client-ui-skin-*`）。在 profile 的 `pnpm-workspace.yaml` 中排除全部 `@linxin666/*` 包后再安装或更新：
+> **pnpm 11 release-age 门禁**：新版本发布后约 10 天内，pnpm 11 的 `minimumReleaseAge` 门禁可能静默装回更旧的 `@neystan/*` 版本（如 `dsh-web-ui-all@0.1.5` 配旧版皮肤中心）。旧版皮肤中心 Apply 皮肤时会写入独立皮肤包引用，导致 `dsh web` 启动崩溃（`ERR_MODULE_NOT_FOUND ... dsh-client-ui-skin-*`）。在 profile 的 `pnpm-workspace.yaml` 中排除全部 `@neystan/*` 包后再安装或更新：
 >
 > ```yaml
 > minimumReleaseAgeExclude:
->   - '@linxin666/*'
+>   - '@neystan/*'
 > ```
 
 ### 方式二：从 GitHub 仓库安装（改代码调试）
@@ -146,16 +150,16 @@ dsh web
 不想装全家桶时，可单独安装任意插件（npm 已发布，直接用包名）：
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-client-ui-task-board   # 任务看板
-dsh plugin --profile web add @linxin666/dsh-tool-describe-image    # 图像理解工具
-dsh plugin --profile web add @linxin666/dsh-pet                    # 鲸鱼娘宠物
+dsh plugin --profile web add @neystan/dsh-client-ui-task-board   # 任务看板
+dsh plugin --profile web add @neystan/dsh-tool-describe-image    # 图像理解工具
+dsh plugin --profile web add @neystan/dsh-pet                    # 鲸鱼娘宠物
 ```
 
 ### 验证与卸载
 
 安装成功后重启 `dsh web`，侧边栏出现对应入口即生效；也可用 `dsh --profile web --dump-config` 确认插件配置层已挂载。若侧边栏没有新入口，多半是安装后没有重启 `dsh web`。
 
-卸载：`dsh plugin --profile web remove @linxin666/dsh-web-ui-all`，然后重启 `dsh web`。
+卸载：`dsh plugin --profile web remove @neystan/dsh-web-ui-all`，然后重启 `dsh web`。
 
 技术细节见 [docs/plugins.md](docs/plugins.md)。
 

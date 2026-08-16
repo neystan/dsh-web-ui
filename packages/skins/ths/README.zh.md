@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-ths
+# @neystan/dsh-client-ui-skin-ths
 
 [English](README.md) | 中文
 
@@ -8,13 +8,13 @@ dsh web GUI 的同花顺风格炒股皮肤。以客户端插件方式热插拔�
 
 ## 安装（官方 bundle 方式）
 
-推荐先装皮肤全家桶聚合包 `@linxin666/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
+推荐先装皮肤全家桶聚合包 `@neystan/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
 
 ```sh
 # 装全部皮肤（推荐）
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # 或单独装本皮肤
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-ths
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-ths
 # 皮肤启用：dsh-skin use ths
 # 从仓库安装（开发调试）：dsh plugin --profile web add link:$(pwd)/packages/skins/ths
 ```

@@ -5,7 +5,7 @@
  * of `~/.dsh/cordis.patch.yml` and the profile symlink; the DSH config
  * watcher hot-reloads the patch within seconds, so no restart is needed.
  * Try-on stays pure browser work (see src/client/try-on.ts).
- * @module @linxin666/dsh-client-ui-skin-center
+ * @module @neystan/dsh-client-ui-skin-center
  */
 
 import { Context } from '@deepseek-ai/cordis'

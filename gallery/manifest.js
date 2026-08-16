@@ -18,7 +18,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#4a5fa8",
       "bodyAttr": "data-dsh-blue-fantasy",
-      "package": "@linxin666/dsh-client-ui-skin-blue-fantasy",
+      "package": "@neystan/dsh-client-ui-skin-blue-fantasy",
       "wiring": {
         "id": "ui-skin-blue-fantasy",
         "bundleWired": false
@@ -46,7 +46,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#4d8fd4",
       "bodyAttr": "data-dsh-whale-song",
-      "package": "@linxin666/dsh-client-ui-skin-whale-song",
+      "package": "@neystan/dsh-client-ui-skin-whale-song",
       "wiring": {
         "id": "ui-skin-whale-song",
         "bundleWired": false
@@ -75,7 +75,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#ff9d5c",
       "bodyAttr": "data-dsh-harbor",
-      "package": "@linxin666/dsh-client-ui-skin-harbor",
+      "package": "@neystan/dsh-client-ui-skin-harbor",
       "wiring": {
         "id": "ui-skin-harbor",
         "bundleWired": false
@@ -102,7 +102,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#2b7cd9",
       "bodyAttr": "data-dsh-retro",
-      "package": "@linxin666/dsh-client-ui-skin-qq98",
+      "package": "@neystan/dsh-client-ui-skin-qq98",
       "wiring": {
         "id": "ui-skin-qq98",
         "bundleWired": false
@@ -128,7 +128,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#e60012",
       "bodyAttr": "data-dsh-ths",
-      "package": "@linxin666/dsh-client-ui-skin-ths",
+      "package": "@neystan/dsh-client-ui-skin-ths",
       "wiring": {
         "id": "ui-skin-ths",
         "bundleWired": false
@@ -155,7 +155,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#316ac5",
       "bodyAttr": "data-dsh-xp",
-      "package": "@linxin666/dsh-client-ui-skin-xp",
+      "package": "@neystan/dsh-client-ui-skin-xp",
       "wiring": {
         "id": "ui-skin-xp",
         "bundleWired": false
@@ -183,7 +183,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#c3272b",
       "bodyAttr": "data-dsh-dragon-heir",
-      "package": "@linxin666/dsh-client-ui-skin-dragon-heir",
+      "package": "@neystan/dsh-client-ui-skin-dragon-heir",
       "wiring": {
         "id": "ui-skin-dragon-heir",
         "bundleWired": false
@@ -211,7 +211,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#7cbd4b",
       "bodyAttr": "data-dsh-minecraft",
-      "package": "@linxin666/dsh-client-ui-skin-minecraft",
+      "package": "@neystan/dsh-client-ui-skin-minecraft",
       "wiring": {
         "id": "ui-skin-minecraft",
         "bundleWired": false
@@ -239,7 +239,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#f23645",
       "bodyAttr": "data-dsh-trading",
-      "package": "@linxin666/dsh-client-ui-skin-trading",
+      "package": "@neystan/dsh-client-ui-skin-trading",
       "wiring": {
         "id": "ui-skin-trading",
         "bundleWired": false
@@ -267,7 +267,7 @@ window.SKIN_MANIFEST = {
       ],
       "accent": "#2e9bff",
       "bodyAttr": "data-dsh-miku",
-      "package": "@linxin666/dsh-client-ui-skin-miku",
+      "package": "@neystan/dsh-client-ui-skin-miku",
       "wiring": {
         "id": "ui-skin-miku",
         "bundleWired": false

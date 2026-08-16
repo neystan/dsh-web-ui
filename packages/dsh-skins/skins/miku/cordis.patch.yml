@@ -4,5 +4,5 @@
 # skins is managed by scripts/dsh-skin (home-layer disabled rows).
 - insert:
     - id: ui-skin-miku
-      name: '@linxin666/dsh-client-ui-skin-miku'
+      name: '@neystan/dsh-client-ui-skin-miku'
 

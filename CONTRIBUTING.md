@@ -67,7 +67,7 @@ pnpm docs:write-pair <包目录名>   # 如 dsh-pet 或 qq98
   注册进 `packages/dsh-web-ui-all/aggregate.yml` 并运行
   `node scripts/aggregate.mjs`。
 - 皮肤：`node scripts/dsh-skin-new` 生成骨架，改完运行
-  `pnpm --filter @linxin666/dsh-skins build` 把皮肤资产并入聚合包。
+  `pnpm --filter @neystan/dsh-skins build` 把皮肤资产并入聚合包。
 - 新增 / 删除包或改皮肤清单时，同步更新 [docs/publish-prep.md](docs/publish-prep.md)
   的发布清单快照。
 

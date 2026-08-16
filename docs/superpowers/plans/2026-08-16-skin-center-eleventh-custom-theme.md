@@ -51,7 +51,7 @@ expect(CustomThemeConfigSchema({})).toEqual({ version: 2, active: false })
 
 - [ ] **Step 2: Run the focused test and verify RED**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
 
 Expected: FAIL because the constants, normalizer, resolver, target mapper, and version 2 schema do not exist.
 
@@ -72,7 +72,7 @@ Use fixed light and dark presets close to official DSH colors. Migrate valid ver
 
 - [ ] **Step 4: Run the focused test and verify GREEN**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/theme.spec.ts`
 
 Expected: PASS with no warnings.
 
@@ -117,7 +117,7 @@ Also assert that an active custom theme does not write tokens when a bundled ski
 
 - [ ] **Step 2: Run the focused test and verify RED**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts`
 
 Expected: FAIL because activation, explicit trial, and default restoration methods are missing.
 
@@ -129,7 +129,7 @@ Update `client/index.ts` so boot construction receives whether an installed skin
 
 - [ ] **Step 4: Run the focused tests and verify GREEN**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts tests/try-on.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/custom-theme.spec.ts tests/try-on.spec.ts`
 
 Expected: PASS; existing try-on restoration tests remain green.
 
@@ -170,7 +170,7 @@ Add a try-on orchestration test proving custom trial calls `tryOnOfficial()` and
 
 - [ ] **Step 2: Run focused tests and verify RED**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/appearance-ui.spec.ts tests/try-on.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/appearance-ui.spec.ts tests/try-on.spec.ts`
 
 Expected: FAIL because the custom card identity and unified orchestration do not exist.
 
@@ -202,7 +202,7 @@ Change the editor reset action to `restoreDefaults()`. Use copy that distinguish
 
 - [ ] **Step 4: Run focused tests and verify GREEN**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center test -- tests/appearance-ui.spec.ts tests/custom-theme.spec.ts tests/try-on.spec.ts tests/manifest.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center test -- tests/appearance-ui.spec.ts tests/custom-theme.spec.ts tests/try-on.spec.ts tests/manifest.spec.ts`
 
 Expected: PASS; tests assert no reload during try-on and exactly one reload after confirmed Apply.
 
@@ -243,11 +243,11 @@ Expected: `README.i18n.yaml` records the two matching documents.
 Run:
 
 ```text
-pnpm --filter @linxin666/dsh-client-ui-skin-center test
-pnpm --filter @linxin666/dsh-client-ui-skin-center typecheck
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center test
+pnpm --filter @neystan/dsh-client-ui-skin-center typecheck
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 pnpm skin-center:check
-pnpm --filter @linxin666/dsh-skins build
+pnpm --filter @neystan/dsh-skins build
 ```
 
 Expected: all commands exit 0 and generated bundles contain the new custom identity and locale copy.
@@ -291,7 +291,7 @@ Add pure derivation tests for RGBA base, layer, overlay, and sidebar tokens. Add
 
 - [ ] **Step 2: Run focused tests and verify RED**
 
-Run: `pnpm --filter @linxin666/dsh-client-ui-skin-center exec vitest run tests/background.spec.ts tests/custom-theme.spec.ts`
+Run: `pnpm --filter @neystan/dsh-client-ui-skin-center exec vitest run tests/background.spec.ts tests/custom-theme.spec.ts`
 
 Expected: FAIL because no-image rendering still returns opaque `#RRGGBB` tokens and the controller does not own an opaque canvas.
 
@@ -301,7 +301,7 @@ Remove the optional background flag from `deriveThemeTokens` and always derive t
 
 - [ ] **Step 4: Run focused and package verification**
 
-Run the two focused tests, the nine non-platform-specific skin-center test files, `pnpm --filter @linxin666/dsh-client-ui-skin-center build`, `pnpm skin-center:check`, and `git diff --check`.
+Run the two focused tests, the nine non-platform-specific skin-center test files, `pnpm --filter @neystan/dsh-client-ui-skin-center build`, `pnpm skin-center:check`, and `git diff --check`.
 
 Expected: all focused and relevant tests pass; the known Windows-only POSIX permission assertion remains separately documented.
 

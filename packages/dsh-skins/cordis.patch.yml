@@ -5,4 +5,4 @@
 # from ../skins/skin-center
 - insert:
     - id: ui-skin-center
-      name: '@linxin666/dsh-client-ui-skin-center'
+      name: '@neystan/dsh-client-ui-skin-center'

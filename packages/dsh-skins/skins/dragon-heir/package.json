@@ -1,7 +1,7 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-dragon-heir",
+  "name": "@neystan/dsh-client-ui-skin-dragon-heir",
   "version": "0.1.15",
-  "description": "Bundled skin inside @linxin666/dsh-skins (@linxin666/dsh-client-ui-skin-dragon-heir).",
+  "description": "Bundled skin inside @neystan/dsh-skins (@neystan/dsh-client-ui-skin-dragon-heir).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

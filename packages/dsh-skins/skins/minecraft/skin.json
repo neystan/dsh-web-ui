@@ -15,7 +15,7 @@
   ],
   "accent": "#7cbd4b",
   "bodyAttr": "data-dsh-minecraft",
-  "package": "@linxin666/dsh-client-ui-skin-minecraft",
+  "package": "@neystan/dsh-client-ui-skin-minecraft",
   "wiring": {
     "id": "ui-skin-minecraft",
     "bundleWired": false

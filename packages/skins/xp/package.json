@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-xp",
+  "name": "@neystan/dsh-client-ui-skin-xp",
   "description": "Hot-pluggable Windows XP (Luna) skin for the dsh web GUI: blue gradient window chrome, green Start button, beveled status bar",
   "version": "0.1.15",
   "type": "module",
@@ -46,6 +46,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }

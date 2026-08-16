@@ -8,6 +8,10 @@ dsh-web-ui is a collection of plugins and skins for the DeepSeek Harness (DSH) W
 
 ![DSH Web UI main screen](docs/screenshots/13-hero-main.png)
 
+## Original Author & Credits
+
+This project is a fork of [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) (npm packages `@linxin666/*`). The original copyright belongs to the original author zhu1090093659, and the original copyright notices are retained in every package LICENSE. This fork is maintained by neystan under the renamed `@neystan/*` scope.
+
 ## Feature Plugins
 
 ### Task Board
@@ -95,23 +99,23 @@ DSH plugins are installed per **profile** with the `dsh plugin` command (`dsh we
 
 ### Option 1: Install from npm (recommended)
 
-The plugins are published to npm (the `@linxin666` scope) — one command installs everything:
+The plugins are published to npm (the `@neystan` scope) — one command installs everything:
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-web-ui-all
+dsh plugin --profile web add @neystan/dsh-web-ui-all
 ```
 
-Restart `dsh web` and all plugin entries appear in the sidebar. Skins only? Install `@linxin666/dsh-skins` instead.
+Restart `dsh web` and all plugin entries appear in the sidebar. Skins only? Install `@neystan/dsh-skins` instead.
 
-> pnpm's strict (isolated) layout only puts the aggregate package at the profile top level, so the 11 child packages referenced by the patch rows (12 insert rows) stay nested and `dsh web` fails with `Cannot find package '@linxin666/dsh-...'`. The children are declared as dependencies of this package; on a strict layout, add `nodeLinker: hoisted` (or the legacy `public-hoist-pattern: ['@linxin666/*']`) to the profile's `pnpm-workspace.yaml` and reinstall.
+> pnpm's strict (isolated) layout only puts the aggregate package at the profile top level, so the 11 child packages referenced by the patch rows (12 insert rows) stay nested and `dsh web` fails with `Cannot find package '@neystan/dsh-...'`. The children are declared as dependencies of this package; on a strict layout, add `nodeLinker: hoisted` (or the legacy `public-hoist-pattern: ['@neystan/*']`) to the profile's `pnpm-workspace.yaml` and reinstall.
 
 > First install may stop on `ERR_PNPM_IGNORED_BUILDS` (pnpm blocks dependency build scripts): copy the printed keys (`cloudflared` / `cpu-features` / `ssh2`) into the profile's `pnpm-workspace.yaml` `allowBuilds` list and re-run.
 
-> **pnpm 11 release-age gate**: for about 10 days after a new release, pnpm 11's `minimumReleaseAge` gate can silently resolve to older `@linxin666/*` versions (e.g. `dsh-web-ui-all@0.1.5` with the old skin center). The old skin center writes references to standalone skin packages when a skin is applied, which crashes `dsh web` at boot (`ERR_MODULE_NOT_FOUND ... dsh-client-ui-skin-*`). Exclude every `@linxin666/*` package in the profile's `pnpm-workspace.yaml` before installing or updating:
+> **pnpm 11 release-age gate**: for about 10 days after a new release, pnpm 11's `minimumReleaseAge` gate can silently resolve to older `@neystan/*` versions (e.g. `dsh-web-ui-all@0.1.5` with the old skin center). The old skin center writes references to standalone skin packages when a skin is applied, which crashes `dsh web` at boot (`ERR_MODULE_NOT_FOUND ... dsh-client-ui-skin-*`). Exclude every `@neystan/*` package in the profile's `pnpm-workspace.yaml` before installing or updating:
 >
 > ```yaml
 > minimumReleaseAgeExclude:
->   - '@linxin666/*'
+>   - '@neystan/*'
 > ```
 
 ### Option 2: Install from the GitHub repository (development)
@@ -141,16 +145,16 @@ dsh web
 Prefer individual plugins? Install them one by one (published on npm, so use the package name directly):
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-client-ui-task-board   # Task board
-dsh plugin --profile web add @linxin666/dsh-tool-describe-image    # Image understanding tool
-dsh plugin --profile web add @linxin666/dsh-pet                    # Whale-girl pet
+dsh plugin --profile web add @neystan/dsh-client-ui-task-board   # Task board
+dsh plugin --profile web add @neystan/dsh-tool-describe-image    # Image understanding tool
+dsh plugin --profile web add @neystan/dsh-pet                    # Whale-girl pet
 ```
 
 ### Verify and uninstall
 
 After installing, restart `dsh web` — a working plugin shows up in the sidebar. You can also confirm the mounted config layers with `dsh --profile web --dump-config`. If nothing appears in the sidebar, you most likely forgot to restart `dsh web`.
 
-Uninstall: `dsh plugin --profile web remove @linxin666/dsh-web-ui-all`, then restart `dsh web`.
+Uninstall: `dsh plugin --profile web remove @neystan/dsh-web-ui-all`, then restart `dsh web`.
 
 Technical details live in [docs/plugins.md](docs/plugins.md).
 

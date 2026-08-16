@@ -15,7 +15,7 @@
   ],
   "accent": "#2e9bff",
   "bodyAttr": "data-dsh-miku",
-  "package": "@linxin666/dsh-client-ui-skin-miku",
+  "package": "@neystan/dsh-client-ui-skin-miku",
   "wiring": {
     "id": "ui-skin-miku",
     "bundleWired": false

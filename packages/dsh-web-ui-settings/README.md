@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-web-ui-settings
+# @neystan/dsh-client-ui-web-ui-settings
 
 English | [中文](README.zh.md)
 
@@ -13,7 +13,7 @@ The dsh web UI plugin group for the DSH settings page: it adds a single card tha
 ### From npm (recommended)
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-client-ui-web-ui-settings
+dsh plugin --profile web add @neystan/dsh-client-ui-web-ui-settings
 ```
 
 ### From the repository (development)

@@ -34,7 +34,7 @@
     "description": "总结当前对话并导出为 Markdown / DOCX / PDF，可选 LLM 智能总结（用户自配 API Key）。",
     "descriptionEn": "Summarize the current conversation and export it as Markdown / DOCX / PDF, with optional LLM summarization using your own API key.",
     "repo": "https://github.com/v833/dsh-chat-summary",
-    "npm": "@linxin666/dsh-client-ui-chat-summary"
+    "npm": "@neystan/dsh-client-ui-chat-summary"
   },
   {
     "id": "dsh-builtin-toggles",

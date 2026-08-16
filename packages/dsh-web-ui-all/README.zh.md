@@ -1,8 +1,12 @@
-# @linxin666/dsh-web-ui-all
+# @neystan/dsh-web-ui-all
 
 [English](README.md) | 中文
 
 DSH Web UI 全家桶聚合插件：一键安装全部功能插件（task-board / git-graph / pet / remote-web-ui / live-stats / web-ui-settings），外加皮肤全家桶（`dsh-skins`，皮肤资产内置）。compat 桥接层已并入本包（`src/client`），因此无需独立的 compat npm 包。
+
+## 原作者与致谢
+
+本包 fork 自 [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui)（原 npm scope `@linxin666/*`），原始版权归原作者 zhu1090093659 所有并在 LICENSE 中保留。由 neystan 以 `@neystan/*` 名义维护。
 
 ## 是什么
 
@@ -14,7 +18,7 @@ DSH Web UI 全家桶聚合插件：一键安装全部功能插件（task-board /
 ### 从 npm 安装（推荐）
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-web-ui-all
+dsh plugin --profile web add @neystan/dsh-web-ui-all
 ```
 
 ### 从仓库安装（开发调试）
@@ -32,5 +36,5 @@ dsh plugin --profile web add link:$(pwd)/packages/dsh-web-ui-all
 ## 已知限制
 
 - 各子插件随本包一起激活；若只需要其中一部分，请直接安装对应子插件包。
-- 不要与同名独立插件包（如 @linxin666/dsh-pet）同时安装；切换前先 `dsh plugin remove` 移除旧的。
+- 不要与同名独立插件包（如 @neystan/dsh-pet）同时安装；切换前先 `dsh plugin remove` 移除旧的。
 - 依赖的 `@deepseek-ai/*` SDK 版本已锁定，兼容性跟随本仓库的发版节奏。

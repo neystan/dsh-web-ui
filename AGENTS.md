@@ -48,8 +48,8 @@ node scripts/dsh-skin-new            # 脚手架：新皮肤包
   `extends` / `paths` / `references` 不得指向任何 DSH 源码 checkout；类型只来自
   `@deepseek-ai/*` 官方 NPM SDK（node_modules 解析），详见
   [packages/AGENTS.md](packages/AGENTS.md)。
-- **新包一律 `dsh-` 前缀**；npm 包名 `@linxin666/dsh-*`（UI 类插件按惯例
-  `@linxin666/dsh-client-ui-*`）。
+- **新包一律 `dsh-` 前缀**；npm 包名 `@neystan/dsh-*`（UI 类插件按惯例
+  `@neystan/dsh-client-ui-*`）。
 - **构建预设只用 `shared/tsdown.client.ts`**，禁止在包内复制。
 - **禁止使用 emoji**（含 Emoji_Presentation、U+FE0F、ZWJ、区域指示符、Dingbats 等
   Unicode Emoji 属性字符），覆盖代码、注释、文档、UI 文案、脚本输出与提交信息；

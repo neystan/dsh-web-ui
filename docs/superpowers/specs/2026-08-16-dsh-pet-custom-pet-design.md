@@ -213,9 +213,9 @@ Client 组件测试覆盖双卡状态、选择后应用、候选预览、导入�
 自动验证至少运行：
 
 ```text
-pnpm --filter @linxin666/dsh-pet typecheck
-pnpm --filter @linxin666/dsh-pet test
-pnpm --filter @linxin666/dsh-pet build
+pnpm --filter @neystan/dsh-pet typecheck
+pnpm --filter @neystan/dsh-pet test
+pnpm --filter @neystan/dsh-pet build
 pnpm docs:check
 ```
 

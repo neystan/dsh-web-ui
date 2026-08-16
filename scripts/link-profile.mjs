@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Link every dsh-web-ui family plugin into the dsh profile's global
- * @linxin666 namespace (~/.dsh/profiles/node_modules/@linxin666).
+ * @neystan namespace (~/.dsh/profiles/node_modules/@neystan).
  *
  * The dsh loader resolves plugin rows (cordis.patch.yml `name:` entries) by
  * Node package resolution from the profile directory, which walks up through
@@ -54,7 +54,7 @@ function report(msg) {
 }
 
 /** Family packages publish under this scope; everything else under packages/ is not ours to link. */
-const FAMILY_SCOPE = '@linxin666/'
+const FAMILY_SCOPE = '@neystan/'
 
 /** Every family package: packages/* and packages/skins/* that has a package.json with a name. */
 function familyPackages() {

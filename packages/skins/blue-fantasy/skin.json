@@ -14,7 +14,7 @@
   ],
   "accent": "#4a5fa8",
   "bodyAttr": "data-dsh-blue-fantasy",
-  "package": "@linxin666/dsh-client-ui-skin-blue-fantasy",
+  "package": "@neystan/dsh-client-ui-skin-blue-fantasy",
   "wiring": {
     "id": "ui-skin-blue-fantasy",
     "bundleWired": false

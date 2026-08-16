@@ -1,8 +1,12 @@
-# @linxin666/dsh-skins
+# @neystan/dsh-skins
 
 English | [中文](README.zh.md)
 
 The skin-family aggregate plugin: installing it gives you the skin center (`skin-center`) plus every skin asset (qq98 / ths / xp / blue-fantasy / dragon-heir / minecraft / miku / trading / whale-song / harbor ...) bundled inside the package's `skins/` directory, so no per-skin npm package is needed.
+
+## Original Author & Credits
+
+Forked from [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-ui) (original npm scope `@linxin666/*`); the original copyright belongs to zhu1090093659 and is retained in the LICENSE. Maintained by neystan as `@neystan/*`.
 
 ## What it is
 
@@ -15,7 +19,7 @@ The skin-family aggregate plugin: installing it gives you the skin center (`skin
 ### From npm (recommended)
 
 ```sh
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 ```
 
 ### From the repository (development)

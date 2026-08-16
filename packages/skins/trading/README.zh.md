@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-trading
+# @neystan/dsh-client-ui-skin-trading
 
 [English](README.md) | 中文
 
@@ -14,13 +14,13 @@ dsh web GUI 的炒股皮肤（交易终端）：把 DeepSeek 聊天界面变成�
 
 ## 安装（官方 bundle 方式）
 
-推荐先装皮肤全家桶聚合包 `@linxin666/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
+推荐先装皮肤全家桶聚合包 `@neystan/dsh-skins` 一次到位；只装本皮肤时用下列 link 命令。
 
 ```sh
 # 装全部皮肤（推荐）
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # 或单独装本皮肤
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-trading
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-trading
 # 皮肤启用：dsh-skin use trading
 # 从仓库安装（开发调试）：dsh plugin --profile web add link:$(pwd)/packages/skins/trading
 ```

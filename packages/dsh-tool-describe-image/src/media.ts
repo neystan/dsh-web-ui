@@ -3,7 +3,7 @@
  * types, the magic-byte gate, and the byte bound both the tool and the attach
  * route enforce. Kept in its own module so the attach route can import it
  * without a cycle through the plugin entry.
- * @module @linxin666/dsh-tool-describe-image/media
+ * @module @neystan/dsh-tool-describe-image/media
  */
 
 /** Image media types the magic-byte gate accepts. */

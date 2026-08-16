@@ -159,10 +159,10 @@ const CUSTOM_THEME_NS = "skin-custom-theme";
 * workspace assets live in packages/skins/<id>). The skin registry is
 * derived from each packages/skins/<id>/skin.json instead of a hand-written
 * dictionary, so adding a skin needs no code change here.
-* @module @linxin666/dsh-client-ui-skin-center/skin-switch
+* @module @neystan/dsh-client-ui-skin-center/skin-switch
 */
 /**
-* Walk up from a file location to the nearest @linxin666/ scoped dir
+* Walk up from a file location to the nearest @neystan/ scoped dir
 * whose entries actually hold skin packages (dsh-skins carrier or
 * dsh-client-ui-skin-* packages). pnpm's virtual store realpaths packages
 * into node_modules/.pnpm/<pkg>@<ver>/node_modules/<name>, so a plain
@@ -174,7 +174,7 @@ const CUSTOM_THEME_NS = "skin-custom-theme";
 function findScopedAnchor(fromDir) {
 	let current = fromDir;
 	for (;;) {
-		const scoped = join(current, "@linxin666");
+		const scoped = join(current, "@neystan");
 		try {
 			for (const entry of readdirSync(scoped)) {
 				if (entry === "dsh-skins") return scoped;
@@ -190,8 +190,8 @@ function findScopedAnchor(fromDir) {
 * Resolve the directory that holds the skin packages (each a dir carrying a
 * skin.json). Candidates, in order:
 *  - monorepo / flat npm layout: new URL('../../', import.meta.url)
-*    (packages/skins/ or node_modules/@linxin666/);
-*  - pnpm virtual-store layout: the nearest @linxin666/ scoped dir found by
+*    (packages/skins/ or node_modules/@neystan/);
+*  - pnpm virtual-store layout: the nearest @neystan/ scoped dir found by
 *    walking up from this package's realpathed location;
 *  - the legacy '../../../skins/' spelling (which pointed at
 *    node_modules/skins/ under npm — the ENOENT of
@@ -255,8 +255,8 @@ function readSkinMeta(absDir) {
 /**
 * Enumerate every candidate skin directory under a skins root. Two shapes:
 *  - direct subdirectories carrying a skin.json (monorepo packages/skins/<id>,
-*    and per-skin npm packages @linxin666/dsh-client-ui-skin-<id>);
-*  - the bundled-skins carrier: @linxin666/dsh-skins/skins/<id> (skin assets
+*    and per-skin npm packages @neystan/dsh-client-ui-skin-<id>);
+*  - the bundled-skins carrier: @neystan/dsh-skins/skins/<id> (skin assets
 *    shipped inside the dsh-skins aggregate so npm needs no per-skin
 *    package names). Directories without a skin.json are skipped.
 * @param skinsDir - the skins root.
@@ -346,7 +346,7 @@ function wiredNames(registry) {
 /**
 * Drop legacy hand-written skin rows (insert rows with a name) and old touch
 * comments. The CLI regex matched the historical @deepseek-ai scope; this
-* also matches the current @linxin666 scope so stale rows are always cleaned.
+* also matches the current @neystan scope so stale rows are always cleaned.
 * @param patch - raw patch file text.
 */
 function stripLegacySkinRows(patch) {
@@ -697,7 +697,7 @@ function writePatchAtomic(filePath, next) {
 * link was created, false when the target was already resolvable.
 *
 * A target that already resolves (a REAL installed directory, e.g. the npm
-* layout where the skin package sits at node_modules/@linxin666/..., or a
+* layout where the skin package sits at node_modules/@neystan/..., or a
 * symlink/junction pointing at the skin dir) is left untouched — there is
 * nothing to link. Only an existing link pointing elsewhere is refreshed.
 * A plain FILE target is still refused (that path is not ours to clobber).
@@ -880,7 +880,7 @@ function currentSkin(patch, opts = {}) {
 * so every route also rejects cross-site requests (Sec-Fetch-Site / Origin
 * fence) — a malicious webpage must not be able to switch the user's skin
 * through a localhost CSRF post.
-* @module @linxin666/dsh-client-ui-skin-center/routes
+* @module @neystan/dsh-client-ui-skin-center/routes
 */
 /** Browser-facing base path of the skin-center API. */
 const SKIN_CENTER_API_PREFIX = "/api/skin-center";
@@ -1038,7 +1038,7 @@ function postRoute(path, run) {
 * skin.json. The id is validated against this map (never used as a raw
 * path) so the bundle route cannot be walked off the skins tree. The root
 * resolves per install layout (monorepo packages/skins/, npm
-* node_modules/@linxin666/) and candidates include the bundled dsh-skins
+* node_modules/@neystan/) and candidates include the bundled dsh-skins
 * carrier (npm layout) — see skin-switch resolveSkinsDir /
 * listSkinDirCandidates.
 * @returns skin id -> directory name.

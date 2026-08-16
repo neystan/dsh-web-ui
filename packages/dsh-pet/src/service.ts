@@ -5,7 +5,7 @@
  * persistence through `persist`. The API gateway maps these methods onto
  * `pet.state` / `pet.interact` / `pet.setVisible` / `pet.setConfig` for
  * browser consumers.
- * @module @linxin666/dsh-pet/service
+ * @module @neystan/dsh-pet/service
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'

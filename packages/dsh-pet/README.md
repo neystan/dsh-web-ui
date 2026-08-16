@@ -89,11 +89,11 @@ global React root (createRoot → document.body) <-- polling 800ms -- pet-client
 
 ## Install
 
-Install the family aggregate package `@linxin666/dsh-web-ui-all` (all plugins and skins in one) or this plugin alone:
+Install the family aggregate package `@neystan/dsh-web-ui-all` (all plugins and skins in one) or this plugin alone:
 
 ```sh
 ### 从 npm 安装（推荐）
-dsh plugin --profile web add @linxin666/dsh-pet
+dsh plugin --profile web add @neystan/dsh-pet
 
 ### 从仓库安装（开发调试）
 git clone https://github.com/zhu1090093659/dsh-web-ui.git

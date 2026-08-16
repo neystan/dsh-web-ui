@@ -1,7 +1,7 @@
 {
-  "name": "@linxin666/dsh-client-ui-skin-blue-fantasy",
+  "name": "@neystan/dsh-client-ui-skin-blue-fantasy",
   "version": "0.1.15",
-  "description": "Bundled skin inside @linxin666/dsh-skins (@linxin666/dsh-client-ui-skin-blue-fantasy).",
+  "description": "Bundled skin inside @neystan/dsh-skins (@neystan/dsh-client-ui-skin-blue-fantasy).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

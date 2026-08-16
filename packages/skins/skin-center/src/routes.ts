@@ -15,7 +15,7 @@
  * so every route also rejects cross-site requests (Sec-Fetch-Site / Origin
  * fence) — a malicious webpage must not be able to switch the user's skin
  * through a localhost CSRF post.
- * @module @linxin666/dsh-client-ui-skin-center/routes
+ * @module @neystan/dsh-client-ui-skin-center/routes
  */
 
 import { createReadStream, readFileSync, statSync } from 'node:fs'
@@ -189,7 +189,7 @@ export interface SkinCenterRoutesDeps {
  * skin.json. The id is validated against this map (never used as a raw
  * path) so the bundle route cannot be walked off the skins tree. The root
  * resolves per install layout (monorepo packages/skins/, npm
- * node_modules/@linxin666/) and candidates include the bundled dsh-skins
+ * node_modules/@neystan/) and candidates include the bundled dsh-skins
  * carrier (npm layout) — see skin-switch resolveSkinsDir /
  * listSkinDirCandidates.
  * @returns skin id -> directory name.

@@ -6,7 +6,7 @@ name: Release
 # packages to npm in dependency order, and creates the GitHub Release.
 #
 # Requires the repository secret NPM_TOKEN (npm automation token for the
-# @linxin666 scope) to publish.
+# @neystan scope) to publish.
 
 on:
   push:

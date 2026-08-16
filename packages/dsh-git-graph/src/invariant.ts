@@ -1,15 +1,15 @@
 /**
- * Package-owned invariant companion for `@linxin666/dsh-client-ui-git-graph`.
+ * Package-owned invariant companion for `@neystan/dsh-client-ui-git-graph`.
  * Not mounted by the bundle patch (the web profile composes no invariants
  * service); kept as the repo-convention companion for compositions that do.
- * @module @linxin666/dsh-client-ui-git-graph/invariant
+ * @module @neystan/dsh-client-ui-git-graph/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@linxin666/dsh-client-ui-git-graph'
+const PACKAGE_NAME = '@neystan/dsh-client-ui-git-graph'
 
 /** Cordis companion plugin name. */
 export const name = 'git-graph-invariant'

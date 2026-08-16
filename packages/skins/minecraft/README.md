@@ -1,4 +1,4 @@
-# @linxin666/dsh-client-ui-skin-minecraft
+# @neystan/dsh-client-ui-skin-minecraft
 
 
 English | [中文](README.zh.md)
@@ -23,13 +23,13 @@ emitted, and nothing reaches a model request.
 
 ## Installing (official bundle)
 
-Prefer the family aggregate package `@linxin666/dsh-skins` — every skin at once; for this skin alone, install with `link:`:
+Prefer the family aggregate package `@neystan/dsh-skins` — every skin at once; for this skin alone, install with `link:`:
 
 ```sh
 # All skins (recommended)
-dsh plugin --profile web add @linxin666/dsh-skins
+dsh plugin --profile web add @neystan/dsh-skins
 # Or just this skin
-dsh plugin --profile web add @linxin666/dsh-client-ui-skin-minecraft
+dsh plugin --profile web add @neystan/dsh-client-ui-skin-minecraft
 # Activate: dsh-skin use minecraft
 # From the repo (dev): dsh plugin --profile web add link:$(pwd)/packages/skins/minecraft
 ```
@@ -51,7 +51,7 @@ pnpm test    # vitest: apply/dispose contract spec
 
 ```sh
 node scripts/skin-center-bundles    # re-embed this skin into skin-center's registry
-pnpm --filter @linxin666/dsh-client-ui-skin-center build
+pnpm --filter @neystan/dsh-client-ui-skin-center build
 node scripts/gallery-build          # refresh the gallery manifest/bundles
 node scripts/capture-previews       # re-shoot preview/light.png + preview/dark.png
 ```

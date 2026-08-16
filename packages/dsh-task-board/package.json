@@ -1,5 +1,5 @@
 {
-  "name": "@linxin666/dsh-client-ui-task-board",
+  "name": "@neystan/dsh-client-ui-task-board",
   "description": "Task board for the dsh web GUI: a sidebar entry plus a multi-column kanban view with host persistence, scheduled runs (host cron scheduler), durable todos, real execution through host agent sessions, and agent tools (the cron tool with action=create/list/pause/resume/run/delete + the todo tool with action=add/list/done/delete). Hot-pluggable — mounted via ~/.dsh/cordis.patch.yml + a profile node_modules symlink, no dsh source changes.",
   "version": "0.1.15",
   "type": "module",
@@ -81,6 +81,16 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zhu1090093659/dsh-web-ui.git"
-  }
+    "url": "https://github.com/neystan/dsh-web-ui.git"
+  },
+  "author": {
+    "name": "neystan",
+    "url": "https://github.com/neystan"
+  },
+  "contributors": [
+    {
+      "name": "zhu1090093659 (Original author)",
+      "url": "https://github.com/zhu1090093659"
+    }
+  ]
 }
