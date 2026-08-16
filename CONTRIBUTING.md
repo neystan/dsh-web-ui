@@ -70,10 +70,6 @@ pnpm docs:write-pair <包目录名>   # 如 dsh-pet 或 qq98
   `pnpm --filter @linxin666/dsh-skins build` 把皮肤资产并入聚合包。
 - 新增 / 删除包或改皮肤清单时，同步更新 [docs/publish-prep.md](docs/publish-prep.md)
   的发布清单快照。
-- 第三方插件想进「社区插件」索引卡片（设置 → 插件配置 → Web UI 插件）时，按
-  [docs/plugins.md](docs/plugins.md) 的登记说明在
-  `packages/dsh-web-ui-settings/community.json` 追加条目并重新生成注册表
-  （`node scripts/community-index`）。
 
 ## 文档体系
 

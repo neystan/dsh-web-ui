@@ -7,7 +7,6 @@ The dsh web UI plugin group for the DSH settings page: it adds a single card tha
 ## What it is
 
 - **One card for the family**: on the DSH settings page it registers a card that hosts the enable switches and configuration forms of the dsh web UI family plugins.
-- **Community plugin index**: a card inside the group lists community-contributed plugins and links to each contributor's own repository (registry in `community.json`, regenerated with `scripts/community-index`).
 
 ## Install
 

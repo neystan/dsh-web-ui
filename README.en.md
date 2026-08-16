@@ -55,7 +55,7 @@ Gives text-only models vision: when a conversation mentions an image (local path
 
 ### Settings Hub
 
-All family plugins' toggles and parameters live under "Settings > Plugin config", and changes apply immediately; a "Community plugins" card inside the group indexes plugins registered by community contributors and links to their repositories.
+All family plugins' toggles and parameters live under "Settings > Plugin config", and changes apply immediately.
 
 ![Plugin config hub](docs/screenshots/02-settings-web-ui-plugins.png)
 

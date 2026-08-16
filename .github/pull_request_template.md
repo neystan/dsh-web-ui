@@ -64,10 +64,6 @@
 
 <!-- 可选。若本 PR 贡献的是插件或皮肤，可在项目 README 末尾「来源与版权」的版权表中追加一行声明你自己的版权（包 / 来源 / 版权三列，格式参考表中现有行）；不声明则维持现有版权归属。 -->
 
-## 社区插件索引登记（Community Plugin Index）
-
-<!-- 可选。若你贡献的是第三方插件且希望被 dsh-web-ui 的「社区插件」卡片索引（设置 > 插件配置 > Web UI 插件），按 docs/plugins.md 的说明在 packages/dsh-web-ui-settings/community.json 登记，并运行 node scripts/community-index 重新生成注册表。 -->
-
 ## 本地验证（Local Validation）
 
 执行的命令：

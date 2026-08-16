@@ -99,16 +99,6 @@ dsh plugin --profile web add link:<dsh-web-ui>/packages/dsh-web-ui-all
    - 版权归原作者，本仓库仅托管，不主张版权。
 3. **合规红线**：无 LICENSE、作者未授权、或版权归属不明的代码，一律不收编。
 
-### 社区插件索引登记
-
-第三方插件作者可把自己的插件登记进「社区插件」卡片（设置 → 插件配置 → Web UI 插件），卡片列出条目并链接到作者自己的仓库：
-
-1. 在 `packages/dsh-web-ui-settings/community.json` 追加条目：`id` / `name` / `nameEn` / `author` / `repo`（https:// 仓库 URL）必填，`description` / `descriptionEn` / `npm` 可选；
-2. 运行 `node scripts/community-index` 重新生成注册表并提交生成的 `packages/dsh-web-ui-settings/src/client/generated/community.ts`；
-3. `pnpm community:check` 校验数据与生成物一致（CI 门禁）。
-
-索引只收录链接、不搬代码，条目版权归原作者，由维护者审核合并。
-
 ## 插件规范要点
 
 - **package.json 的 `dsh.bundle.patch` 声明**：指向包内 `cordis.patch.yml`，这是官方 bundle 清单，`dsh plugin` 依赖它识别与挂载插件。
