@@ -43,6 +43,7 @@ describe('loadPetPersist', () => {
     const dir = tempDir()
     try {
       const data = {
+        appearance: 'custom' as const,
         name: '泡泡',
         affinity: { ...emptyAffinity(), points: 42, pets: 3, feeds: 1, turns: 10 },
         treats: { ...emptyTreatLedger(), treats: 7, lastTreatGrantAt: 1234, turnsAtLastTreatGrant: 9 },
@@ -50,6 +51,26 @@ describe('loadPetPersist', () => {
       }
       savePetPersist(data, dir)
       expect(loadPetPersist(dir)).toEqual(data)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('migrates a legacy file without appearance to the official pet', () => {
+    const dir = tempDir()
+    try {
+      writeFileSync(join(dir, 'pet.json'), JSON.stringify({ name: '旧宠物' }), 'utf8')
+      expect(loadPetPersist(dir).appearance).toBe('official')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('normalizes an invalid appearance to the official pet', () => {
+    const dir = tempDir()
+    try {
+      writeFileSync(join(dir, 'pet.json'), JSON.stringify({ appearance: 'unknown' }), 'utf8')
+      expect(loadPetPersist(dir).appearance).toBe('official')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

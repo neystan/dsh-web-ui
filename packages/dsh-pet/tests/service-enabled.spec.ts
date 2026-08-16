@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -475,6 +475,53 @@ describe('PetService (rc.6 session events)', () => {
         name: '  鲸鱼娘  ',
       })
       expect(service.petName()).toBe('鲸鱼娘')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('imports, applies, switches, and deletes one custom asset pair without changing progression', async () => {
+    const ctx = new Context()
+    const dir = tempDir()
+    const manifestText = readFileSync(join(process.cwd(), 'assets', 'whale', 'pet.json'), 'utf8')
+    const spritesheetBase64 = readFileSync(join(process.cwd(), 'assets', 'whale', 'spritesheet.webp')).toString('base64')
+    try {
+      const service = new PetService(ctx, { persistDir: dir })
+      const official = await service.appearanceState()
+      const candidate = await service.importCandidate({
+        manifestFileName: 'pet.json',
+        manifestText,
+        spritesheetFileName: 'spritesheet.webp',
+        spritesheetBase64,
+        expectedState: official.stateToken,
+      })
+      expect(candidate.appearance).toBe('official')
+      expect(candidate.candidate?.slot).toBe('candidate')
+      const custom = await service.useCustom(candidate.stateToken)
+      expect(custom.appearance).toBe('custom')
+      expect((await service.state()).asset.kind).toBe('custom')
+      const officialAgain = await service.useOfficial(custom.stateToken)
+      expect(officialAgain.appearance).toBe('official')
+      const deleted = await service.deleteCustom(officialAgain.stateToken)
+      expect(deleted.current).toBeUndefined()
+      expect(deleted.candidate).toBeUndefined()
+      expect((await service.state()).asset.kind).toBe('official')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('falls back to official when persisted custom files are missing', async () => {
+    const ctx = new Context()
+    const dir = tempDir()
+    try {
+      const persist = loadPetPersist(dir)
+      persist.appearance = 'custom'
+      const { savePetPersist } = await import('../src/persist.ts')
+      savePetPersist(persist, dir)
+      const service = new PetService(ctx, { persistDir: dir })
+      expect((await service.appearanceState()).appearance).toBe('official')
+      expect(loadPetPersist(dir).appearance).toBe('official')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

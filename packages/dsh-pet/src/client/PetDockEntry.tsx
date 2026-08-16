@@ -69,6 +69,7 @@ export function PetDockEntry(props: PetDockEntryProps): ReactElement {
       <span data-pet-dock data-testid="pet-dock">
         <WhalePet
           snapshot={snapshot}
+          asset={snapshot?.asset}
           display={snapshot?.display ?? DEFAULT_DISPLAY}
           feedback={feedback}
           onPet={props.pet}

@@ -22,7 +22,7 @@ import {
   settleTreatGrants,
   type TreatConfig,
 } from './treats.ts'
-import type { PetDisplayConfig, PetPersist } from './persist.ts'
+import type { PetAppearance, PetDisplayConfig, PetPersist } from './persist.ts'
 
 /** Tuning overrides for the affinity economy. */
 export interface LedgerConfig {
@@ -91,6 +91,13 @@ export class PetLedger {
   /** Replace the pet display name (validation stays a caller concern). */
   setName(name: string): void {
     this.current = { ...this.current, name }
+    this.dirty = true
+  }
+
+  /** Select the official or single custom asset pair. */
+  setAppearance(appearance: PetAppearance): void {
+    if (this.current.appearance === appearance) return
+    this.current = { ...this.current, appearance }
     this.dirty = true
   }
 

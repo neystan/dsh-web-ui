@@ -35,8 +35,12 @@ export const DISPLAY_SIZE_MIN = 32
 export const DISPLAY_SIZE_MAX = 512
 export const DISPLAY_INSET_MAX = 10_000
 
+/** Which asset pair is currently rendered by the floating pet. */
+export type PetAppearance = 'official' | 'custom'
+
 /** Everything persisted for the pet. */
 export interface PetPersist {
+  appearance: PetAppearance
   /** User-customizable pet display name. */
   name: string
   affinity: AffinityState
@@ -53,6 +57,7 @@ export const PET_NAME_MAX_LENGTH = 20
 
 export function emptyPersist(): PetPersist {
   return {
+    appearance: 'official',
     name: DEFAULT_PET_NAME,
     affinity: emptyAffinity(),
     treats: emptyTreatLedger(),
@@ -110,6 +115,7 @@ export function loadPetPersist(dir: string = petHomeDir()): PetPersist {
       bottom: Math.round(clamp(finiteNum(rawDisplay.bottom, base.display.bottom), DISPLAY_INSET_MAX)),
     }
     return {
+      appearance: parsed.appearance === 'custom' ? 'custom' : 'official',
       name: typeof parsed.name === 'string' && parsed.name.trim() !== ''
         ? parsed.name
         : base.name,

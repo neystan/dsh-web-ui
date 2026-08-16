@@ -183,9 +183,11 @@ export function apply(ctx: ClientContext): void {
           }
         }
         start()
+        document.addEventListener('dsh-pet-appearance-changed', pollNow)
         document.addEventListener('visibilitychange', onVisibility)
         return () => {
           stop()
+          document.removeEventListener('dsh-pet-appearance-changed', pollNow)
           document.removeEventListener('visibilitychange', onVisibility)
         }
       }, 'pet: poll')

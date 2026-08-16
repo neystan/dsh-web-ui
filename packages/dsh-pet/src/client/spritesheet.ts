@@ -14,12 +14,18 @@
  */
 
 import type { PetAnimation } from '../state.ts'
+import {
+  PET_ATLAS_COLUMNS,
+  PET_ATLAS_ROWS,
+  PET_FRAME_HEIGHT,
+  PET_FRAME_WIDTH,
+} from '../core/pet-assets.ts'
 
 /** Atlas cell size in px (Codex contract). */
-export const FRAME_WIDTH = 192
-export const FRAME_HEIGHT = 208
+export const FRAME_WIDTH = PET_FRAME_WIDTH
+export const FRAME_HEIGHT = PET_FRAME_HEIGHT
 /** Columns per row (max frames per track). */
-export const FRAME_COLUMNS = 8
+export const FRAME_COLUMNS = PET_ATLAS_COLUMNS
 
 /** One animation track: frame indices into the row + per-frame durations. */
 export interface TrackDef {
@@ -96,14 +102,14 @@ export function detectFrameCounts(image: HTMLImageElement): number[] {
   canvas.width = image.naturalWidth
   canvas.height = image.naturalHeight
   const ctx = canvas.getContext('2d')
-  if (ctx === null) return Array.from({ length: 9 }, () => FRAME_COLUMNS)
+  if (ctx === null) return Array.from({ length: PET_ATLAS_ROWS }, () => FRAME_COLUMNS)
   ctx.drawImage(image, 0, 0)
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
   const counts: number[] = []
   const stride = FRAME_COLUMNS * FRAME_WIDTH
   const probeStep = 8
   const margin = 12
-  for (let row = 0; row < 9; row++) {
+  for (let row = 0; row < PET_ATLAS_ROWS; row++) {
     let count = 0
     for (let col = 0; col < FRAME_COLUMNS; col++) {
       let hasContent = false

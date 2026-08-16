@@ -27,6 +27,20 @@ const snapshot: PetStateView = {
   },
   display: { visible: true, size: 160, right: 24, bottom: 20 },
   name: '泡泡',
+  asset: {
+    kind: 'official',
+    slot: 'official',
+    manifest: {
+      id: 'whale-girl',
+      displayName: '鲸鱼娘',
+      description: '一只软萌治愈的鲸鱼娘，来自深海的陪伴小伙伴。',
+      spritesheetPath: 'spritesheet.webp',
+      frames: [6, 8, 8, 4, 5, 8, 6, 6, 6],
+    },
+    revision: 'official',
+    manifestUrl: '/pet/whale/pet.json',
+    spritesheetUrl: '/pet/whale/spritesheet.webp',
+  },
   treats: { stocked: 3, max: 5 },
 }
 
@@ -158,5 +172,44 @@ describe('WhalePet status bubble', () => {
     })
     expect(screen.queryByText('摸摸成功')).not.toBeNull()
     expect(screen.queryByText('正在思考')).toBeNull()
+  })
+})
+
+describe('WhalePet asset loading', () => {
+  it('reloads the manifest and spritesheet when the asset revision changes', () => {
+    const sources: string[] = []
+    class FakeImage {
+      onload: (() => void) | null = null
+      set src(value: string) {
+        sources.push(value)
+        queueMicrotask(() => this.onload?.())
+      }
+    }
+    vi.stubGlobal('Image', FakeImage)
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ frames: [6, 8, 8, 4, 5, 8, 6, 6, 6] }) })))
+    const custom = {
+      ...snapshot.asset,
+      kind: 'custom' as const,
+      slot: 'current' as const,
+      revision: 'custom-revision',
+      manifestUrl: '/pet/custom/current/pet.json?rev=custom-revision',
+      spritesheetUrl: '/pet/custom/current/spritesheet.webp?rev=custom-revision',
+    }
+    const props: WhalePetProps = {
+      snapshot,
+      display: snapshot.display,
+      feedback: null,
+      onPet: vi.fn(),
+      onFeed: vi.fn(),
+      onHide: vi.fn(),
+      onDragEnd: vi.fn(),
+      onRename: vi.fn(),
+      onFeedbackDone: vi.fn(),
+      t,
+    }
+    const view = render(<WhalePet {...props} />)
+    view.rerender(<WhalePet {...props} asset={custom} />)
+    expect(sources).toEqual(['/pet/whale/spritesheet.webp', '/pet/custom/current/spritesheet.webp?rev=custom-revision'])
+    vi.unstubAllGlobals()
   })
 })

@@ -9,9 +9,18 @@
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import type { AffinityConfig, PetAffinityView, PetInteraction } from './affinity.ts'
 import type { TreatConfig } from './treats.ts'
+import {
+  PET_SPRITESHEET_MAX_BYTES,
+  inspectWebpContainer,
+  parsePetManifest,
+  type PetAssetManifest,
+} from './core/pet-assets.ts'
+import { PetAssetStore, type PetAssetStoreSnapshot, type PetAssetSlot } from './pet-asset-store.ts'
 import {
   emptyProjectionRuntime,
   isActivityPhase,
@@ -29,6 +38,7 @@ import {
   petHomeDir,
   savePetPersist,
   type PetDisplayConfig,
+  type PetAppearance,
   type PetPersist,
 } from './persist.ts'
 import {
@@ -88,6 +98,8 @@ export interface PetStateView {
   display: PetDisplayConfig
   /** User-customizable pet display name. */
   name: string
+  /** Active official or custom asset descriptor. */
+  asset: PetAssetView
   /** Treat (小鱼干) stock snapshot. */
   treats: {
     /** Stocked treats now. */
@@ -96,6 +108,37 @@ export interface PetStateView {
     max: number
   }
 }
+
+export interface PetAssetView {
+  kind: 'official' | 'custom'
+  slot: 'official' | 'current' | 'candidate'
+  manifest: PetAssetManifest
+  revision: string
+  manifestUrl: string
+  spritesheetUrl: string
+}
+
+export interface PetAppearanceView {
+  appearance: PetAppearance
+  official: PetAssetView
+  current?: PetAssetView
+  candidate?: PetAssetView
+  stateToken: string
+  error?: 'store.recovered' | 'store.invalid-custom'
+}
+
+export interface ImportPetInput {
+  manifestFileName: 'pet.json'
+  manifestText: string
+  spritesheetFileName: 'spritesheet.webp'
+  spritesheetBase64: string
+  expectedState: string
+}
+
+const OFFICIAL_PET_MANIFEST = parsePetManifest(readFileSync(
+  fileURLToPath(new URL('../assets/whale/pet.json', import.meta.url)),
+  'utf8',
+))
 
 /** Result of `pet.interact`. */
 export type PetInteractResult = LedgerInteractionResult
@@ -118,6 +161,9 @@ export class PetService extends Service {
   private readonly machine: PetStateMachine
   private readonly ledger: PetLedger
   private readonly persistDir: string
+  private readonly assetStore: PetAssetStore
+  private readonly assetReady: Promise<void>
+  private operationQueue: Promise<void> = Promise.resolve()
   private enabled: boolean
   private disposeActivity: (() => void) | undefined
   /** Session whose most recent meaningful event currently drives the global pet. */
@@ -129,6 +175,14 @@ export class PetService extends Service {
     this.persistDir = config.persistDir ?? petHomeDir()
     const ledgerConfig: LedgerConfig = { affinity: config.affinity, treats: config.treats }
     this.ledger = new PetLedger(loadPetPersist(this.persistDir), ledgerConfig)
+    this.assetStore = new PetAssetStore(this.persistDir)
+    this.assetReady = this.assetStore.recover(this.ledger.snapshot.appearance).then(async () => {
+      const assets = await this.assetStore.snapshot()
+      if (this.ledger.snapshot.appearance === 'custom' && assets.current === undefined) {
+        this.ledger.setAppearance('official')
+        this.flush()
+      }
+    })
     this.machine = new PetStateMachine({
       ...defaultPetStateConfig,
       ...(config.state ?? {}),
@@ -145,7 +199,91 @@ export class PetService extends Service {
 
   /** RPC: current pet state snapshot. */
   async state(): Promise<PetStateView> {
+    await this.assetReady
     return this.view()
+  }
+
+  /** Current official/custom asset descriptors for the settings manager. */
+  async appearanceState(): Promise<PetAppearanceView> {
+    await this.assetReady
+    return this.appearanceView(await this.assetStore.snapshot())
+  }
+
+  /** Import one validated candidate pair without changing the active choice. */
+  async importCandidate(input: ImportPetInput): Promise<PetAppearanceView> {
+    return this.enqueue(async () => {
+      await this.assetReady
+      if (input.manifestFileName !== 'pet.json' || input.spritesheetFileName !== 'spritesheet.webp') {
+        throw new Error('asset.invalid-filename')
+      }
+      await this.assertState(input.expectedState)
+      if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(input.spritesheetBase64)
+        || input.spritesheetBase64.length % 4 !== 0) {
+        throw new Error('asset.invalid-base64')
+      }
+      const bytes = Buffer.from(input.spritesheetBase64, 'base64')
+      if (bytes.toString('base64') !== input.spritesheetBase64) throw new Error('asset.invalid-base64')
+      if (bytes.byteLength > PET_SPRITESHEET_MAX_BYTES) throw new Error('asset.too-large')
+      parsePetManifest(input.manifestText)
+      inspectWebpContainer(bytes)
+      await this.assetStore.importCandidate(input.manifestText, bytes)
+      return this.appearanceView(await this.assetStore.snapshot())
+    })
+  }
+
+  /** Select the bundled official pet while keeping custom files available. */
+  async useOfficial(expectedState: string): Promise<PetAppearanceView> {
+    return this.enqueue(async () => {
+      await this.assetReady
+      await this.assertState(expectedState)
+      this.ledger.setAppearance('official')
+      this.flush()
+      return this.appearanceView(await this.assetStore.snapshot())
+    })
+  }
+
+  /** Select current custom files, promoting a validated candidate if needed. */
+  async useCustom(expectedState: string): Promise<PetAppearanceView> {
+    return this.enqueue(async () => {
+      await this.assetReady
+      await this.assertState(expectedState)
+      const previousAppearance = this.ledger.snapshot.appearance
+      const promotion = await this.assetStore.preparePromotion(previousAppearance)
+      try {
+        this.ledger.setAppearance('custom')
+        this.flush()
+        await promotion.commit()
+        return this.appearanceView(await this.assetStore.snapshot())
+      } catch (error) {
+        await promotion.rollback().catch(() => {})
+        this.ledger.setAppearance(previousAppearance)
+        this.flush()
+        throw error
+      }
+    })
+  }
+
+  /** Switch to official first, then remove both custom slots. */
+  async deleteCustom(expectedState: string): Promise<PetAppearanceView> {
+    return this.enqueue(async () => {
+      await this.assetReady
+      await this.assertState(expectedState)
+      this.ledger.setAppearance('official')
+      this.flush()
+      await this.assetStore.deleteAll()
+      return this.appearanceView(await this.assetStore.snapshot())
+    })
+  }
+
+  /** Read one validated custom static asset for the fixed media routes. */
+  async readCustomAsset(slot: PetAssetSlot, name: 'pet.json' | 'spritesheet.webp'): Promise<Buffer> {
+    await this.assetReady
+    const snapshot = await this.assetStore.snapshot()
+    if ((slot === 'current' && snapshot.current === undefined)
+      || (slot === 'candidate' && snapshot.candidate === undefined)) {
+      throw new Error('asset.unavailable')
+    }
+    return this.assetStore.readFile(slot, name)
   }
 
   /** Current persisted display config (read-only view). */
@@ -311,8 +449,9 @@ export class PetService extends Service {
     if (this.ledger.rewardLegacyTurn(Date.now())) this.flush()
   }
 
-  private view(): PetStateView {
+  private async view(): Promise<PetStateView> {
     const snapshot = this.machine.render()
+    const assetState = await this.assetStore.snapshot()
     // Read-only: the ledger settles on economic events only, never on a read,
     // so polling the state cannot trigger pet.json writes.
     return {
@@ -323,10 +462,68 @@ export class PetService extends Service {
       affinity: this.ledger.affinityView(Date.now()),
       display: { ...this.ledger.snapshot.display },
       name: this.ledger.snapshot.name,
+      asset: this.activeAssetView(assetState),
       treats: {
         stocked: this.ledger.snapshot.treats.treats,
         max: this.ledger.treatMax,
       },
+    }
+  }
+
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const run = this.operationQueue.then(operation, operation)
+    this.operationQueue = run.then(() => undefined, () => undefined)
+    return run
+  }
+
+  private async assertState(expectedState: string): Promise<void> {
+    if (typeof expectedState !== 'string' || expectedState.length === 0) throw new Error('asset.invalid-state')
+    const current = await this.assetStore.snapshot()
+    if (this.combinedStateToken(current) !== expectedState) {
+      const error = new Error('asset.state-conflict')
+      Object.assign(error, { status: 409, code: 'asset.state-conflict' })
+      throw error
+    }
+  }
+
+  private combinedStateToken(store: PetAssetStoreSnapshot): string {
+    return `${this.ledger.snapshot.appearance}:${store.stateToken}`
+  }
+
+  private assetView(kind: 'official' | 'custom', slot: 'official' | 'current' | 'candidate', manifest: PetAssetManifest, revision: string): PetAssetView {
+    const prefix = kind === 'official' ? '/pet/whale' : `/pet/custom/${slot}`
+    const query = kind === 'official' ? '' : `?rev=${encodeURIComponent(revision)}`
+    return {
+      kind,
+      slot,
+      manifest,
+      revision,
+      manifestUrl: `${prefix}/pet.json${query}`,
+      spritesheetUrl: `${prefix}/spritesheet.webp${query}`,
+    }
+  }
+
+  private activeAssetView(store: PetAssetStoreSnapshot): PetAssetView {
+    if (this.ledger.snapshot.appearance === 'custom' && store.current !== undefined) {
+      return this.assetView('custom', 'current', store.current.manifest, store.current.revision)
+    }
+    return this.assetView('official', 'official', OFFICIAL_PET_MANIFEST, 'official')
+  }
+
+  private appearanceView(store: PetAssetStoreSnapshot): PetAppearanceView {
+    const current = store.current === undefined
+      ? undefined
+      : this.assetView('custom', 'current', store.current.manifest, store.current.revision)
+    const candidate = store.candidate === undefined
+      ? undefined
+      : this.assetView('custom', 'candidate', store.candidate.manifest, store.candidate.revision)
+    return {
+      appearance: this.ledger.snapshot.appearance,
+      official: this.assetView('official', 'official', OFFICIAL_PET_MANIFEST, 'official'),
+      ...(current === undefined ? {} : { current }),
+      ...(candidate === undefined ? {} : { candidate }),
+      stateToken: this.combinedStateToken(store),
+      ...(store.recoveryError === undefined ? {} : { error: store.recoveryError }),
     }
   }
 

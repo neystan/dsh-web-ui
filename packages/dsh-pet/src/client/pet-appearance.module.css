@@ -1,0 +1,182 @@
+.section {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  padding: 14px 0 10px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.sectionHead h3 {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.sectionHead p,
+.cardDescription,
+.cardStatus,
+.error {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cards {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card {
+  background: var(--dsw-alias-bg-layer-3);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cardSelected {
+  border-color: var(--dsw-alias-brand-primary);
+}
+
+.cardHeader {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.cardHeader:focus-visible,
+.actions button:focus-visible,
+.useSelected:focus-visible,
+.fileLabel input:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
+}
+
+.preview {
+  align-items: center;
+  background: var(--dsw-alias-bg-layer-2);
+  border-radius: 8px;
+  display: flex;
+  flex: none;
+  height: 96px;
+  justify-content: center;
+  overflow: hidden;
+  width: 96px;
+}
+
+.preview > div {
+  flex: none;
+}
+
+.emptyPreview {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 24px;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cardTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cardStatus {
+  color: var(--dsw-alias-brand-primary);
+}
+
+.cardBody {
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.fileLabel {
+  color: var(--dsw-alias-label-secondary);
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.fileLabel input {
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  max-width: 100%;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actions button,
+.useSelected {
+  background: transparent;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 5px 9px;
+}
+
+.actions button:hover:not(:disabled),
+.useSelected:hover:not(:disabled) {
+  border-color: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary);
+}
+
+.actions button:disabled,
+.useSelected:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.useSelected {
+  margin-top: 10px;
+}
+
+.error {
+  color: var(--dsw-alias-state-error-primary);
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardHeader,
+  .actions button,
+  .useSelected {
+    transition: none;
+  }
+}

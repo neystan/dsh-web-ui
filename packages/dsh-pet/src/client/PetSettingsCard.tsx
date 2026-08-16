@@ -8,6 +8,7 @@ import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-cli
 import type { SettingsScope, SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import { PluginSettingsCard, ValueField, BooleanField } from './PluginSettingsCard.tsx'
 import { CardForm, booleanField, numberField, textField, type CardActions, type CardShell, type FieldState as CardFieldState } from './settings-form.ts'
+import { PetAppearanceField } from './PetAppearanceField.tsx'
 
 /** The pet's settings fields this card edits (the namespace's full schema). */
 export interface PetSettings {
@@ -118,6 +119,7 @@ export function PetSettingsCard(props: PetSettingsCardProps) {
       onSave={props.save}
       onDiscard={props.discard}
     >
+      <PetAppearanceField t={t as unknown as (key: string) => string} />
       <BooleanField
         id="settings-pet-enabled"
         label={t('settings.enabled')}

@@ -26,6 +26,9 @@ export type {
   PetConfig,
   PetInteractResult,
   PetStateView,
+  PetAssetView,
+  PetAppearanceView,
+  ImportPetInput,
 } from './service.ts'
 export {
   AFFINITY_MAX,
@@ -67,13 +70,14 @@ export {
   petHomeDir,
   savePetPersist,
 } from './persist.ts'
-export type { PetDisplayConfig, PetPersist } from './persist.ts'
+export type { PetAppearance, PetDisplayConfig, PetPersist } from './persist.ts'
 
 export {
   makePetRoutes,
   petPackageRoot,
   PET_API_PREFIX,
   PET_ASSET_PREFIX,
+  PET_CUSTOM_ASSET_PREFIX,
 } from './routes.ts'
 
 /** Stable cordis plugin name (matches cordis.patch.yml insert id). */
@@ -113,36 +117,23 @@ export function apply(ctx: Context, config: PetConfig = {}): void {
     enabled: config.enabled ?? true,
   }
   // The browser half talks to the pet through same-origin JSON endpoints and
-  // loads the atlas from the pet's own media route (RPC domains are
-  // platform-registered, so the pet serves its own API — the same pattern as
-  // the family RPC domains). The routes are registered while
-  // the plugin is enabled; toggling the setting off makes the pet API
-  // disappear until it is re-enabled.
+  // loads the atlas from the pet's own media route. Management routes remain
+  // available while the floating pet is disabled; only activity consumption
+  // and the browser overlay follow the enabled setting.
   const routes = makePetRoutes({ service, packageRoot: petPackageRoot(import.meta.url) })
-  let disposeRoutes: (() => void) | undefined
-  const syncRoutes = (): void => {
-    const enabled = current().enabled ?? true
-    if (disposeRoutes === undefined && enabled) {
-      disposeRoutes = ctx.effect(
-        () => {
-          const disposers = routes.map((route) => ctx.webServer.register(route))
-          return () => { for (const dispose of disposers) dispose() }
-        },
-        'pet: routes',
-      )
-    } else if (disposeRoutes !== undefined && !enabled) {
-      disposeRoutes()
-      disposeRoutes = undefined
-    }
-  }
+  ctx.effect(
+    () => {
+      const disposers = routes.map((route) => ctx.webServer.register(route))
+      return () => { for (const dispose of disposers) dispose() }
+    },
+    'pet: routes',
+  )
   installSettingsSection(ctx, settingsNamespace(PET_SETTINGS_NAMESPACE), PET_SETTINGS_SCHEMA, base, {
     setSource: (source) => { current = source },
     onChange: () => {
       const section = current()
       service.applySettingsSection(section)
       service.setEnabled(section.enabled ?? true)
-      syncRoutes()
     },
   })
-  syncRoutes()
 }

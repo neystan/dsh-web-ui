@@ -64,4 +64,14 @@ describe('PetLedger', () => {
     expect(ledger.snapshot.name).toBe('泡泡')
     expect(ledger.takeDirty()).toBe(true)
   })
+
+  it('changes appearance without changing economy or display state', () => {
+    const ledger = new PetLedger(emptyPersist())
+    const before = ledger.snapshot
+    ledger.setAppearance('custom')
+    expect(ledger.snapshot).toEqual({ ...before, appearance: 'custom' })
+    expect(ledger.takeDirty()).toBe(true)
+    ledger.setAppearance('custom')
+    expect(ledger.takeDirty()).toBe(false)
+  })
 })

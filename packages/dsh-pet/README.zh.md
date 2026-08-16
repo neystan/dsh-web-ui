@@ -22,6 +22,18 @@
 | 隐藏/召唤 | 悬浮面板「隐藏」；隐藏后输入选择行出现「召唤{名字}」按钮 |
 | 状态气泡 | 显示当前会话阶段或工具名；短暂的交互反馈会临时优先显示 |
 | 多会话活动 | 宠物是 host 全局的：最近一条有效事件决定显示，所有会话的完成回合都会计入亲密度与小鱼干 |
+| 自定义宠物 | 设置卡中分别导入 `pet.json` 与 `spritesheet.webp`，先验证并预览候选，再无刷新切换；与官方宠物共用名字、亲密度、小鱼干、大小和位置 |
+
+## 自定义宠物（MVP）
+
+设置 → 宠物 → 宠物外观中会看到官方鲸鱼娘和一个自定义宠物卡片。自定义宠物必须严格兼容当前素材格式：
+
+- `pet.json`：`id`、`displayName`、`description`、`spritesheetPath: "spritesheet.webp"`、固定帧数 `[6, 8, 8, 4, 5, 8, 6, 6, 6]`。
+- `spritesheet.webp`：透明 WebP，`1536×1872`，8 列 × 9 行，每格 `192×208`；动作行顺序为 `idle`、`running-right`、`running-left`、`waving`、`jumping`、`failed`、`waiting`、`running`、`review`。
+
+两个文件需要分别选择。浏览器会逐格检查尺寸、透明区域、有效帧和尾部空白，导入后先显示“待应用”预览；点击“使用所选宠物”才切换，切换不刷新网页。自定义素材保存到 `$DSH_HOME/pet/custom` 的单一 `current`/`candidate` 槽位，切回官方或删除自定义素材都不会清除养成数据。
+
+点击“复制生成提示词”，把提示词和一张清晰、完整、无遮挡的宠物参考图交给 Agent。提示词只使用仓库相对模板路径 `packages/dsh-pet/assets/whale`，要求 Agent 最终只交付 `pet.json` 与 `spritesheet.webp`；插件首版不负责调用 AI、图片转动画、压缩包或多套宠物管理。
 
 ## 动画演示
 

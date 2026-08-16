@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PetDisplayConfig } from '../persist.ts'
 import type { PetStateView } from '../service.ts'
+import type { PetAssetView } from '../service.ts'
 import type { PetFeedback } from './pet-store.ts'
 import { framePosition, FRAME_WIDTH, FRAME_HEIGHT, FRAME_COLUMNS, TRACKS, rowOfTrack, trimTrack, detectFrameCounts } from './spritesheet.ts'
 import type { PetAnimation } from '../state.ts'
@@ -25,10 +26,27 @@ export const PET_SPRITESHEET_URL = '/pet/whale/spritesheet.webp'
 /** Browser URL of the whale-girl manifest (authoritative per-row frame counts). */
 export const PET_MANIFEST_URL = '/pet/whale/pet.json'
 
+const OFFICIAL_ASSET: PetAssetView = {
+  kind: 'official',
+  slot: 'official',
+  manifest: {
+    id: 'whale-girl',
+    displayName: '鲸鱼娘',
+    description: '一只软萌治愈的鲸鱼娘，来自深海的陪伴小伙伴。',
+    spritesheetPath: 'spritesheet.webp',
+    frames: [6, 8, 8, 4, 5, 8, 6, 6, 6],
+  },
+  revision: 'official',
+  manifestUrl: PET_MANIFEST_URL,
+  spritesheetUrl: PET_SPRITESHEET_URL,
+}
+
 /** Props injected by the slot registration (store actions + locale). */
 export interface WhalePetProps {
   /** Latest host snapshot; null while loading. */
   snapshot: PetStateView | null
+  /** Active asset descriptor; optional for old callers that already carry it in snapshot. */
+  asset?: PetAssetView
   /** Display configuration (persisted by the host). */
   display: PetDisplayConfig
   /** Active reaction bubble, if any. */
@@ -62,6 +80,7 @@ function clampOffset(value: number, max: number): number {
  */
 export function WhalePet(props: WhalePetProps): ReactPortal {
   const { snapshot, display, feedback } = props
+  const asset = props.asset ?? snapshot?.asset ?? OFFICIAL_ASSET
   const spriteRef = useRef<HTMLDivElement | null>(null)
   const floatRef = useRef<HTMLDivElement | null>(null)
   const [imageReady, setImageReady] = useState(false)
@@ -86,11 +105,14 @@ export function WhalePet(props: WhalePetProps): ReactPortal {
   // that field is absent (older manifests).
   useEffect(() => {
     let cancelled = false
+    setImageReady(false)
+    setFrameCounts(null)
+    frameRef.current = { track: null, index: 0, elapsed: 0 }
     const img = new Image()
     img.onload = () => {
       if (cancelled) return
       setImageReady(true)
-      fetch(PET_MANIFEST_URL)
+      fetch(asset.manifestUrl)
         .then((res) => (res.ok ? res.json() : Promise.resolve<{ frames?: unknown }>({})))
         .then((manifest: { frames?: unknown }) => {
           if (cancelled) return
@@ -105,12 +127,12 @@ export function WhalePet(props: WhalePetProps): ReactPortal {
           if (!cancelled) setFrameCounts(detectFrameCounts(img))
         })
     }
-    img.src = PET_SPRITESHEET_URL
+    img.src = asset.spritesheetUrl
     return () => {
       cancelled = true
       img.onload = null
     }
-  }, [])
+  }, [asset.manifestUrl, asset.spritesheetUrl, asset.revision])
 
   // Frame loop: advance the current track and write background-position.
   // Offsets must be in SCALED coordinates (background-position applies to the
@@ -259,7 +281,7 @@ export function WhalePet(props: WhalePetProps): ReactPortal {
         style={{
           width: spriteWidth,
           height: spriteHeight,
-          backgroundImage: imageReady ? `url(${PET_SPRITESHEET_URL})` : undefined,
+          backgroundImage: imageReady ? `url(${asset.spritesheetUrl})` : undefined,
           backgroundSize: `${FRAME_WIDTH * FRAME_COLUMNS * spriteScale}px ${FRAME_HEIGHT * 9 * spriteScale}px`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: '0 0',
