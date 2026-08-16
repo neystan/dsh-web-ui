@@ -96,7 +96,7 @@ global React root（createRoot → document.body） <-- 轮询 800ms -- pet-clie
 dsh plugin --profile web add @neystan/dsh-pet
 
 ### 从仓库安装（开发调试）
-git clone https://github.com/zhu1090093659/dsh-web-ui.git
+git clone https://github.com/neystan/dsh-web-ui.git
 cd dsh-web-ui
 pnpm install && pnpm -r build
 dsh plugin --profile web add link:$(pwd)/packages/dsh-pet

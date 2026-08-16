@@ -4,7 +4,7 @@
 
 ![dsh-web-ui](docs/dsh-web-ui-banner.png)
 
-dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务看板、Git 图谱、右侧面板、图像理解工具、鲸鱼娘宠物，以及皮肤中心。所有插件既可独立安装，也可通过聚合包一次装齐。
+dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务看板、Git 图谱、右侧面板、图像理解工具、鲸鱼娘宠物，以及皮肤中心。新增能力包括宿主级 cron、跨会话待办、真实 LLM 执行、自定义主题和自定义宠物。所有插件既可独立安装，也可通过聚合包一次装齐。
 
 ![DSH Web UI 主界面](docs/screenshots/13-hero-main.png)
 
@@ -20,9 +20,13 @@ dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务
 
 任务支持定时执行：在详情中配置 cron 表达式（如每天 23:00 自动升级 DSH、每周一 09:00 生成周报），到点自动开工，无需人工值守。
 
+看板顶部的待办事项与 Agent 工具共用同一份持久化账本；Agent 可以调用 `cron` 工具管理创建、查看、暂停、恢复、立即执行和删除定时任务，也可以调用 `todo` 工具（`add`、`list`、`done`、`delete`）管理待办。执行任务时，宿主会创建真实 DSH Agent 会话，使用当前工作区和预设运行 `执行 Prompt`，状态、日志和结果都能回到任务详情中追踪。
+
 | 多列看板 | 定时执行 |
 | --- | --- |
 | ![任务看板](docs/screenshots/09-task-board.png) | ![任务定时执行](docs/screenshots/10-task-board-detail-cron.png) |
+
+![任务看板与待办](docs/screenshots/31-task-board-todos-live.png) · ![任务 LLM 执行入口](docs/screenshots/34-task-llm-execution-live.png)
 
 ### Git 图谱
 
@@ -50,12 +54,16 @@ dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务
 | --- | --- |
 | ![鲸鱼娘宠物](docs/screenshots/11-pet-new-chat.png) | ![宠物互动面板](docs/screenshots/12-pet-panel.png) |
 
+设置中的「宠物外观」支持分别导入兼容格式的 `pet.json` 与 `spritesheet.webp`，先验证、再预览并无刷新切换；官方宠物和自定义宠物共用名字、亲密度、小鱼干、大小与位置设置。
+
+![自定义宠物导入](docs/screenshots/33-pet-custom-upload-live.png)
+
 
 
 
 ### 图像理解
 
-为纯文本模型提供视觉能力：对话中提到图片（本地路径、http(s) URL 或会话附件）时，`describe_image` 工具把图片交给配置的 OpenAI 兼容视觉端点（Qwen-VL、GLM-4V、GPT-4o、本地 Ollama 等）回答，**只有返回的文本进入会话，图片本身不进会话记录**。纯文本模型的输入框没有图片入口，插件在输入框加了一个图片按钮：选图后自动生成附件引用插入草稿，模型即可用 `describe_image` 分析；工具还支持 `prompt` 参数传入自定义指令（如 OCR、UI 诊断、翻译），比默认描述更精准。端点、模型、密钥与默认指令在「设置 > 插件配置 > Image understanding」卡配置，即时生效。
+为纯文本模型提供视觉能力：对话中提到图片（本地路径、http(s) URL 或会话附件）时，`describe_image` 工具把图片交给配置的 OpenAI 兼容视觉端点（Qwen-VL、GLM-4V、GPT-4o、本地 Ollama 等）回答，**只有返回的文本进入会话，图片本身不进会话记录**。工具还支持 `prompt` 参数传入自定义指令（如 OCR、UI 诊断、翻译），比默认描述更精准。端点、模型、密钥与默认指令在「设置 > 插件配置 > 图像理解」卡配置，即时生效。当前插件提供工具调用能力，不额外替换 DSH 原生图片输入；纯文本模型是否能直接发图仍取决于模型本身。
 
 ### 设置中心
 
@@ -65,9 +73,11 @@ dsh-web-ui 是 DeepSeek Harness（DSH）Web UI 的插件与皮肤集合：任务
 
 ## 皮肤
 
-皮肤中心提供 10 款皮肤，均支持先试穿再应用：试穿即时生效、退出完全还原，确认满意后一键应用。
+皮肤中心提供 10 款内置皮肤，并额外提供第 11 个「自定义主题」槽位。自定义主题用精简的强调色、背景色、前景色和对比度控制外观，可上传一张全局 WebP 背景；官方皮肤支持跟随皮肤 / 自定义 / 无背景三种模式。所有主题均支持先试穿再应用：试穿即时生效、退出完全还原，应用后自动刷新生效。
 
 ![皮肤中心](docs/screenshots/03-settings-skin-center.png)
+
+![自定义主题与背景](docs/screenshots/32-skin-custom-theme-live.png)
 
 ### Windows XP（Luna）
 
@@ -124,7 +134,7 @@ dsh plugin --profile web add @neystan/dsh-web-ui-all
 
 ```sh
 # 1. 克隆仓库
-git clone https://github.com/zhu1090093659/dsh-web-ui.git
+git clone https://github.com/neystan/dsh-web-ui.git
 cd dsh-web-ui
 
 # 2. 安装依赖并构建

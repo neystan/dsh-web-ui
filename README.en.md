@@ -4,7 +4,7 @@
 
 ![dsh-web-ui](docs/dsh-web-ui-banner.png)
 
-dsh-web-ui is a collection of plugins and skins for the DeepSeek Harness (DSH) Web UI: a task board, a Git graph, the right panel, an image-understanding tool, a whale-girl pet, and the Skin Center. Every plugin can be installed individually, or all at once through the aggregate packages.
+dsh-web-ui is a collection of plugins and skins for the DeepSeek Harness (DSH) Web UI: a task board, a Git graph, the right panel, an image-understanding tool, a whale-girl pet, and the Skin Center. New capabilities include host-side cron, cross-session todos, real LLM task execution, custom themes, and custom pets. Every plugin can be installed individually, or all at once through the aggregate packages.
 
 ![DSH Web UI main screen](docs/screenshots/13-hero-main.png)
 
@@ -20,9 +20,13 @@ Open it from the sidebar. Tasks are organized into five columns: Planned, To-do,
 
 Tasks also support scheduled execution: configure a cron expression in the detail view (e.g. auto-upgrade DSH at 23:00 daily, generate a weekly report at 09:00 every Monday), and the task runs on its own at the scheduled time.
 
+The todo strip at the top of the board shares one persistent ledger with the Agent tools: the `cron` tool creates, lists, pauses, resumes, runs, and deletes schedules, while the `todo` tool handles `add`, `list`, `done`, and `delete`. Running a task creates a real DSH Agent session in the selected workspace and preset, sends the task's `Execution Prompt`, and brings status, logs, and the result back to the task detail.
+
 | Multi-column board | Scheduled execution |
 | --- | --- |
 | ![Task board](docs/screenshots/09-task-board.png) | ![Scheduled task detail](docs/screenshots/10-task-board-detail-cron.png) |
+
+![Task board and todos](docs/screenshots/31-task-board-todos-live.png) · ![LLM task execution entry](docs/screenshots/34-task-llm-execution-live.png)
 
 ### Git Graph
 
@@ -50,12 +54,16 @@ A whale girl who lives at the edge of the interface and switches animations with
 | --- | --- |
 | ![Whale pet](docs/screenshots/11-pet-new-chat.png) | ![Pet interaction panel](docs/screenshots/12-pet-panel.png) |
 
+Settings > Pet appearance accepts a compatible `pet.json` and `spritesheet.webp` as two separate files. The pair is validated, previewed, and switched without a page refresh; official and custom pets share the name, affinity, treats, size, and position settings.
+
+![Custom pet import](docs/screenshots/33-pet-custom-upload-live.png)
+
 
 
 
 ### Image Understanding
 
-Gives text-only models vision: when a conversation mentions an image (local path, http(s) URL, or session attachment), the `describe_image` tool sends it to a configured OpenAI-compatible vision endpoint (Qwen-VL, GLM-4V, GPT-4o, a local Ollama endpoint…) and returns the answer. **Only the returned text enters the conversation — the image itself never enters the session log.** Since text-only models have no image entry in the input box, the plugin adds an image button there: picking a file inserts an attachment reference into your draft, and the model can analyze it via `describe_image`; the tool also accepts a `prompt` argument for precise custom instructions (OCR, UI diagnosis, translation) that beat a generic description. Endpoint, model, key, and the default instruction are configured live under Settings > Plugin config > "Image understanding".
+Gives text-only models vision: when a conversation mentions an image (local path, http(s) URL, or session attachment), the `describe_image` tool sends it to a configured OpenAI-compatible vision endpoint (Qwen-VL, GLM-4V, GPT-4o, a local Ollama endpoint…) and returns the answer. **Only the returned text enters the conversation — the image itself never enters the session log.** The tool also accepts a `prompt` argument for precise custom instructions (OCR, UI diagnosis, translation) that beat a generic description. Endpoint, model, key, and the default instruction are configured live under Settings > Plugin config > "Image understanding". The plugin adds the tool but does not replace DSH's native image-input path; direct image sending still depends on the selected model.
 
 ### Settings Hub
 
@@ -65,9 +73,11 @@ All family plugins' toggles and parameters live under "Settings > Plugin config"
 
 ## Skins
 
-The skin center ships ten skins, each supporting try-on before applying: preview applies instantly and reverts fully on exit; once you are satisfied, apply it with one click.
+The skin center ships ten bundled skins plus an eleventh Custom theme slot. The compact editor exposes accent, background, foreground, and contrast, and one uploaded WebP can be used as a global background; bundled skins support Follow skin / Custom / None modes. Every theme supports try-on before applying: preview applies instantly and reverts fully on exit; Apply refreshes the page once to make the persisted choice take effect.
 
 ![Skin center](docs/screenshots/03-settings-skin-center.png)
+
+![Custom theme and background](docs/screenshots/32-skin-custom-theme-live.png)
 
 ### Windows XP (Luna)
 
@@ -124,7 +134,7 @@ The packages are already on npm; installing from this repository is only for dev
 
 ```sh
 # 1. Clone the repository
-git clone https://github.com/zhu1090093659/dsh-web-ui.git
+git clone https://github.com/neystan/dsh-web-ui.git
 cd dsh-web-ui
 
 # 2. Install dependencies and build

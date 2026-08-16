@@ -12,7 +12,7 @@
 
 - **皮肤中心 + 全套皮肤**：一个包取代单独安装各皮肤。
 - **皮肤启用互斥由 `dsh-skin use` 管理**：皮肤互斥激活，由 `dsh-skin use` 管理（`~/.dsh/cordis.patch.yml` 的 `managed` 区段），因此皮肤只进 `skins/` 资产，不进 `patchFrom`。
-- **精简外观控制**：官方亮/暗主题只提供三种颜色和对比度；一张上传后的 WebP 背景可跨官方外观与全部内置皮肤使用，并支持跟随皮肤 / 自定义 / 无背景。
+- **精简外观控制**：第 11 个「自定义主题」只提供三种颜色和对比度；一张上传后的 WebP 背景可跨官方外观与全部内置皮肤使用，并支持跟随皮肤 / 自定义 / 无背景。
 
 ## 安装
 
@@ -25,7 +25,7 @@ dsh plugin --profile web add @neystan/dsh-skins
 ### 从仓库安装（开发调试）
 
 ```sh
-git clone https://github.com/zhu1090093659/dsh-web-ui.git
+git clone https://github.com/neystan/dsh-web-ui.git
 cd dsh-web-ui
 pnpm install && pnpm -r build
 dsh plugin --profile web add link:$(pwd)/packages/dsh-skins

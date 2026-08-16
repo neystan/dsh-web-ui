@@ -12,7 +12,7 @@ Forked from [zhu1090093659/dsh-web-ui](https://github.com/zhu1090093659/dsh-web-
 
 - **Skin center + full collection**: one package replaces installing skins individually.
 - **Mutual exclusion via `dsh-skin use`**: skin activation is exclusive and managed by `dsh-skin use` (the `managed` section of `~/.dsh/cordis.patch.yml`), so skins live as `skins/` assets only and never enter `patchFrom`.
-- **Compact appearance controls**: customize the official light/dark colors with three colors plus contrast, and use one uploaded WebP background across the official look and every bundled skin with Follow skin / Custom / None modes.
+- **Compact appearance controls**: the 11th Custom theme slot exposes three colors plus contrast, and one uploaded WebP background can be reused by the official look and every bundled skin with Follow skin / Custom / None modes.
 
 ## Install
 
@@ -25,7 +25,7 @@ dsh plugin --profile web add @neystan/dsh-skins
 ### From the repository (development)
 
 ```sh
-git clone https://github.com/zhu1090093659/dsh-web-ui.git
+git clone https://github.com/neystan/dsh-web-ui.git
 cd dsh-web-ui
 pnpm install && pnpm -r build
 dsh plugin --profile web add link:$(pwd)/packages/dsh-skins

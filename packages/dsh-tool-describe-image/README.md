@@ -17,8 +17,8 @@ browser half, live settings, no dsh source changes.
 
 | Capability | Description |
 | --- | --- |
-| Three inputs | Local absolute path, http(s) URL (redirects refused), an `[image attachment …]` JSON note, or the short markdown reference a drag/paste produces (`![图片](/describe-image/raw/sha256:…)` — the model passes the id from the URL; the in-process attach registry resolves it and the store's digest verification still runs) |
-| Direct image send | Dragging or pasting an image into a text-only session is rewritten at send time into a describe-image reference (`![图片](/describe-image/raw/sha256:…)`) instead of an image block the model cannot read, so the image renders in the conversation and the model analyzes it through the tool |
+| Inputs | Local absolute path, http(s) URL (redirects refused), or an existing session-attachment reference |
+| Model-facing tool | The text model calls `describe_image`; only the returned description enters the session log. The plugin does not add a separate image-picker button or replace DSH's native composer input |
 | Custom instructions | The `prompt` argument carries your precise instruction (OCR, chart reading, UI diagnosis, translation…); the `defaultPrompt` config sets the fallback when the model passes none |
 | Live config card | Settings → Plugin config → Web UI Plugins → "Image understanding" card edits `baseURL` / `apiStyle` / `model` / API key / default instruction / bounds (through the settings seam); effective immediately, no restart |
 | Protocol styles | `apiStyle: chat-completions` (default) posts to `baseURL/chat/completions`; `apiStyle: responses` posts to `baseURL/responses` with `input` / `max_output_tokens` and reads `output_text` |
@@ -99,14 +99,12 @@ text", "extract the table as CSV", "diagnose the UI layout problems", "translate
 Chinese". A targeted instruction beats a generic description; the tool description steers the
 text model toward passing one. Calls without a `prompt` fall back to `defaultPrompt`.
 
-### Sending images directly
+### Sending images
 
-Text-only models have no image entry in the DSH input box, so drag or paste an image into the
-composer: at send time the plugin rewrites the image-bearing send into a describe-image reference
-(`![图片](/describe-image/raw/sha256:…)`) instead of an image block the model cannot read — the
-image renders in the conversation and the model analyzes it through the tool. The bytes travel to
-the host `/describe-image/attach` route (validated for size and magic bytes, persisted in the
-attachment store); only the reference text enters the session log.
+The plugin is a model-facing tool, not a replacement composer. Give the model a local path, an
+http(s) URL, or an attachment reference in the conversation; it can then call `describe_image`.
+Whether a file can be selected directly in the composer is still controlled by DSH and the selected
+model's native image-input support.
 
 ## Known limitations
 
