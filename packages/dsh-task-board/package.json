@@ -92,5 +92,8 @@
       "name": "zhu1090093659 (Original author)",
       "url": "https://github.com/zhu1090093659"
     }
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
