@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-DSH Web UI 全家桶聚合插件：一键安装任务看板（宿主 cron、待办、真实 LLM 执行）、Git 图谱、右侧面板、鲸鱼娘宠物（含自定义素材）、图像理解工具、Web UI 设置和皮肤全家桶（10 款内置皮肤 + 自定义主题槽位）。皮肤资产内置在 `dsh-skins`，无需单独安装每个皮肤包。
+DSH Web UI 全家桶聚合插件：一键安装任务看板（宿主 cron、待办、真实 LLM 执行）、Git 图谱、右侧面板、鲸鱼娘宠物（含自定义素材）、图像理解工具和皮肤全家桶（10 款内置皮肤 + 自定义主题槽位）。设置卡片使用 DSH rc.7 官方 keyed settings 槽位。皮肤资产内置在 `dsh-skins`，无需单独安装每个皮肤包。
 
 ## 原作者与致谢
 
@@ -10,7 +10,7 @@ DSH Web UI 全家桶聚合插件：一键安装任务看板（宿主 cron、待�
 
 ## 是什么
 
-- **一次安装、全部到位**：其 dependencies 引入全部子插件包（aionui-panel / task-board / git-graph / pet / describe-image / web-ui-settings / dsh-skins）。
+- **一次安装、全部到位**：其 dependencies 引入全部子插件包（aionui-panel / task-board / git-graph / pet / describe-image / dsh-skins）。
 - **聚合载具**：`cordis.patch.yml` 汇总各子插件的 `insert` 行，经 dsh 插件 profile 机制挂载。
 
 ## 新增能力

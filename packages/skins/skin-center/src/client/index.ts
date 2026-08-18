@@ -1,13 +1,12 @@
 /**
  * In-GUI skin center, browser half: registers the Skins plugin card into the
- * Web UI plugin group (`web-ui.plugin.item`, declared by the web-ui-settings
- * group card under 插件配置) and provides the try-on controller + official
+ * official rc.7 keyed settings slot and provides the try-on controller + official
  * theme handle to it. The card lists every installed skin (embedded
  * registry), tries it on live inside the GUI, exits with a full restore, and
  * copies the one-command apply. The plugin writes only DOM and the settings
  * ledger — no services, no events, no model access.
  */
-import type { ClientContext, SettingsScope, SettingsScopeSpec } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
@@ -35,12 +34,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
   interface SlotMap {
     /**
-     * The child slot the Web UI plugin group declares; this card registers
-     * into the group instead of the top-level `settings.plugin.item` list.
-     * Spelled here with the same shape so this package can register without
-     * depending on the sibling UI package.
+     * The official rc.7 settings card slot. The key is the background settings
+     * namespace owned by this card; the card also edits custom-theme settings.
      */
-    'web-ui.plugin.item': { kind: 'list'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
+    'settings.plugin.item': { kind: 'keyed'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
   }
 }
 
@@ -50,24 +47,12 @@ export interface SettingsPluginItemOwnerProps {
   children?: never
 }
 
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    /**
-     * Optional rc.6 compatibility binder provided by dsh-web-ui-settings;
-     * absent when that group plugin is not installed, so callers fall back to
-     * the official settings scope.
-     */
-    webUiSettings?: { bind<S>(spec: SettingsScopeSpec<S>): SettingsScope<S> }
-  }
-}
-
-
 /** Required services: slots + locale (plugin card), theme (preview toggle), and settingsScope + its transport (background scrim). */
 export const inject = ['slots', 'locale', 'theme', 'settingsScope', 'connection', 'remote']
 
 /**
  * Register the skin-center dictionaries, the body scope attribute, and the
- * Skins plugin card inside the Web UI plugin group.
+ * Skins plugin card inside the official rc.7 keyed settings slot.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
@@ -81,9 +66,8 @@ export function apply(ctx: ClientContext): void {
   }, 'ui-skin-center: body scope')
 
   const theme = ctx.get('theme') as ThemeRuntime
-  const binder = ctx.get('webUiSettings') ?? ctx.settingsScope
-  const backgroundScope = binder.bind<BackgroundSettings>({ namespace: SKIN_BACKGROUND_NS })
-  const customThemeScope = binder.bind<CustomThemeSettings>({ namespace: CUSTOM_THEME_NS })
+  const backgroundScope = ctx.settingsScope.bind<BackgroundSettings>({ namespace: SKIN_BACKGROUND_NS })
+  const customThemeScope = ctx.settingsScope.bind<CustomThemeSettings>({ namespace: CUSTOM_THEME_NS })
   const background = new BackgroundController(backgroundScope)
   const customTheme = new CustomThemeController(
     customThemeScope,
@@ -119,10 +103,9 @@ export function apply(ctx: ClientContext): void {
     background,
   })
 
-  ctx.slots.inject('web-ui.plugin.item', () => ctx.slots.register({
-    name: 'web-ui.plugin.item',
-    id: 'skins',
-    order: 110,
+  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
+    name: 'settings.plugin.item',
+    key: SKIN_BACKGROUND_NS,
     locale: NS,
     inject: injected,
   }, SkinCenter))

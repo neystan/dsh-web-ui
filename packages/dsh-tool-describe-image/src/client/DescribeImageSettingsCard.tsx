@@ -1,7 +1,7 @@
 /**
  * The describe-image settings card: the vision endpoint (base URL, model,
  * key reference), the default instruction, and the call bounds. Registers
- * into the `web-ui.plugin.item` slot the Web UI Plugins group renders,
+ * into the official keyed `settings.plugin.item` slot,
  * bound to the `describe-image` settings namespace through the family
  * settings bridge (or the official settings scope when the deployment
  * exposes the namespace directly).
@@ -95,7 +95,7 @@ export class DescribeImageSettingsCardController {
 
 /** Props the renderer binds for the describe-image card. */
 export type DescribeImageSettingsCardProps =
-  PropsRuntime<'web-ui.plugin.item'>
+  PropsRuntime<'settings.plugin.item'>
   & InjectFace<DescribeImageSettingsCardFace>
 
 /**

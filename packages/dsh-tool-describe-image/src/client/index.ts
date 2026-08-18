@@ -12,7 +12,7 @@
  * @module @neystan/dsh-tool-describe-image/client
  */
 
-import type { ClientContext, SettingsScope, SettingsScopeSpec } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -29,11 +29,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
   interface SlotMap {
     /**
-     * One family plugin card inside the Web UI Plugins group. Spelled here
-     * with the same shape so this package can register without depending on
-     * the sibling web-ui-settings package.
+     * The official rc.7 settings card slot. The key is the settings namespace
+     * this card edits, so the settings-plugins tab can dispatch it safely.
      */
-    'web-ui.plugin.item': { kind: 'list'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
+    'settings.plugin.item': { kind: 'keyed'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
   }
 }
 
@@ -41,17 +40,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export interface SettingsPluginItemOwnerProps {
   /** Marker field: card owner props are intentionally empty. */
   children?: never
-}
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    /**
-     * Optional rc.6 compatibility binder provided by dsh-web-ui-settings;
-     * absent when that group plugin is not installed, so callers fall back to
-     * the official settings scope.
-     */
-    webUiSettings?: { bind<S>(spec: SettingsScopeSpec<S>): SettingsScope<S> }
-  }
 }
 
 /** Locale namespace of the browser half. */
@@ -86,14 +74,12 @@ export function apply(ctx: ClientContext): void {
     // The settings card: bound to the describe-image namespace through the
     // family bridge when the official scope does not expose it.
     ctx.inject(['settingsScope'], (settingsCtx: ClientContext) => {
-      const binder = settingsCtx.get('webUiSettings') ?? settingsCtx.settingsScope
-      const settingsScope = binder.bind<DescribeImageSettings>({ namespace: NS })
+      const settingsScope = settingsCtx.settingsScope.bind<DescribeImageSettings>({ namespace: NS })
       const settingsCard = new DescribeImageSettingsCardController(settingsScope)
-      slots.inject('web-ui.plugin.item', () =>
+      slots.inject('settings.plugin.item', () =>
         slots.register({
-          name: 'web-ui.plugin.item',
-          id: 'describe-image',
-          order: 115,
+          name: 'settings.plugin.item',
+          key: NS,
           locale: NS,
           inject: () => settingsCard.inject(),
         }, DescribeImageSettingsCard))

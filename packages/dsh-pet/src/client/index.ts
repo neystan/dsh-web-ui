@@ -10,7 +10,7 @@
  * @module @neystan/dsh-pet/client
  */
 
-import type { ClientContext, SettingsScope, SettingsScopeSpec } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: pulls the settings-surface Context merge (ctx.settingsScope).
@@ -77,12 +77,10 @@ export type { PetSettingsCardFace, PetSettingsCardState } from './PetSettingsCar
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     /**
-     * The child slot the Web UI plugin group declares; this card registers
-     * into the group instead of the top-level `settings.plugin.item` list.
-     * Spelled here with the same shape so this package can register without
-     * depending on the sibling UI package.
+     * The official rc.7 settings card slot. The key is the settings namespace
+     * this card edits, so the settings-plugins tab can dispatch it safely.
      */
-    'web-ui.plugin.item': { kind: 'list'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
+    'settings.plugin.item': { kind: 'keyed'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
   }
 }
 
@@ -92,29 +90,16 @@ export interface SettingsPluginItemOwnerProps {
   children?: never
 }
 
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    /**
-     * Optional rc.6 compatibility binder provided by dsh-web-ui-settings;
-     * absent when that group plugin is not installed, so callers fall back to
-     * the official settings scope.
-     */
-    webUiSettings?: { bind<S>(spec: SettingsScopeSpec<S>): SettingsScope<S> }
-  }
-}
-
-
 /**
  * Client plugin body: register dictionaries, mount the global pet entry and
  * poll loop while the plugin is enabled, and seat the settings card in the
- * Web UI plugin group.
+ * official rc.7 keyed settings slot.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'pet: dictionaries')
 
-  const binder = ctx.get('webUiSettings') ?? ctx.settingsScope
-  const settingsScope = binder.bind<PetSettings>({ namespace: PET_SETTINGS_NS })
+  const settingsScope = ctx.settingsScope.bind<PetSettings>({ namespace: PET_SETTINGS_NS })
   const enabled = (): boolean => {
     const snapshot = settingsScope.getSnapshot()
     return snapshot.status === 'ready'
@@ -125,10 +110,9 @@ export function apply(ctx: ClientContext): void {
   // Plugin configuration card: one staged form over the `pet` settings
   // namespace, contributed to the Web UI plugin group.
   const petSettings = new PetSettingsCardController(settingsScope)
-  ctx.slots.inject('web-ui.plugin.item', () => ctx.slots.register({
-    name: 'web-ui.plugin.item',
-    id: 'pet-settings',
-    order: 140,
+  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
+    name: 'settings.plugin.item',
+    key: PET_SETTINGS_NS,
     locale: NS,
     inject: () => petSettings.inject(),
   }, PetSettingsCard))

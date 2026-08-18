@@ -15,6 +15,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { WebUiSettingsBinder } from './compat-settings-scope.ts'
 import { WebUIPluginsCard } from './WebUIPluginsCard.tsx'
+import { registerWebUiSettingsGroup } from './slot-registration.ts'
 import { en, zh, type WebUIPluginsKey } from './locales.ts'
 
 export type { WebUIPluginsCardProps } from './WebUIPluginsCard.tsx'
@@ -62,11 +63,15 @@ export function apply(ctx: ClientContext): void {
   // namespaces natively.
   new WebUiSettingsBinder(ctx)
 
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    id: 'web-ui-plugins',
-    order: 90,
-    locale: 'web-ui-plugins',
-    children: { 'web-ui.plugin.item': { kind: 'list', scope: 'root' } },
-  }, WebUIPluginsCard))
+  ctx.slots.inject('settings.plugin.item', () => registerWebUiSettingsGroup(
+    ctx.slots as unknown as Parameters<typeof registerWebUiSettingsGroup>[0],
+    {
+      name: 'settings.plugin.item',
+      id: 'web-ui-plugins',
+      order: 90,
+      locale: 'web-ui-plugins',
+      children: { 'web-ui.plugin.item': { kind: 'list', scope: 'root' } },
+    },
+    WebUIPluginsCard,
+  ))
 }

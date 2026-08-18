@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-`@neystan/dsh-client-ui-skin-center` (cordis plugin id `ui-skin-center`) embeds the skin list / try-on / apply into the plugin configuration page of the real dsh Web GUI, as a card in the "Web UI plugins" group (settings → plugin config → Web UI plugins → 皮肤中心 / Skin Center), sharing the same slot (`web-ui.plugin.item`) as the family plugins such as task-board / pet / live-stats, without taking a top-level settings nav item.
+`@neystan/dsh-client-ui-skin-center` (cordis plugin id `ui-skin-center`) embeds the skin list / try-on / apply into the plugin configuration page of the real dsh Web GUI. It registers directly in the DSH rc.7 keyed `settings.plugin.item` slot under the `skin-background` namespace, so it appears alongside the other family plugin cards without taking a top-level settings nav item.
 
 - List: shows the separate stock "官方默认" (official default) entry plus 11 themes: 10 bundled skins and one custom theme. Every theme uses the same card, Try on / Apply controls, active marker, tagline, and accent swatch; the custom card adds Edit.
 - Try-on: clicking "Try on" loads a bundled skin's client bundle on demand — the host route `/api/skin-center/bundle/<id>` serves `lib/client.js` as a same-origin script (the same mechanism the core uses to load plugins), the factory registers with the page's own `window.__ModuleLoader__`, and `window.__DSH_MODULES__.import` materializes it (a real loader, not a simulator and no eval). Official and custom themes use the same surface lifecycle without loading a user bundle. The look changes immediately without refreshing; "Exit try-on" restores the previous styles, DOM, favicon, title, body inline styles, custom tokens, and background.

@@ -11,7 +11,7 @@
  * shell fails the whole boot when a plugin apply throws, and an external
  * plugin must not take the GUI down.
  */
-import type { ClientContext, SessionId, SettingsScope, SettingsScopeSpec, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SessionId, SettingsScope, WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale) and its
@@ -41,12 +41,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
   interface SlotMap {
     /**
-     * The child slot the Web UI plugin group declares; this card registers
-     * into the group instead of the top-level `settings.plugin.item` list.
-     * Spelled here with the same shape so this package can register without
-     * depending on the sibling UI package.
+     * The official rc.7 settings card slot. The key is the settings namespace
+     * this card edits, so the settings-plugins tab can dispatch it safely.
      */
-    'web-ui.plugin.item': { kind: 'list'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
+    'settings.plugin.item': { kind: 'keyed'; scope: 'root'; owner: SettingsPluginItemOwnerProps }
   }
 }
 
@@ -55,18 +53,6 @@ export interface SettingsPluginItemOwnerProps {
   /** Marker field: card owner props are intentionally empty. */
   children?: never
 }
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    /**
-     * Optional rc.6 compatibility binder provided by dsh-web-ui-settings;
-     * absent when that group plugin is not installed, so callers fall back to
-     * the official settings scope.
-     */
-    webUiSettings?: { bind<S>(spec: SettingsScopeSpec<S>): SettingsScope<S> }
-  }
-}
-
 
 /** Required services (fiber inject waiting — the runtime must be up first). */
 export const inject = ['slots', 'sessions', 'workspaces', 'connection', 'settingsScope', 'locale', 'remote']
@@ -89,14 +75,12 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'task-board: dictionaries')
 
   // Plugin configuration card: one staged form over the `task-board` settings
-  // namespace, contributed to the Web UI plugin group.
-  const binder = ctx.get('webUiSettings') ?? ctx.settingsScope
-  const settingsScope = binder.bind<TaskBoardSettings>({ namespace: TASK_BOARD_NS })
+  // namespace, contributed to the official rc.7 keyed settings slot.
+  const settingsScope = ctx.settingsScope.bind<TaskBoardSettings>({ namespace: TASK_BOARD_NS })
   const settingsCard = new TaskBoardSettingsCardController(settingsScope)
-  ctx.slots.inject('web-ui.plugin.item', () => ctx.slots.register({
-    name: 'web-ui.plugin.item',
-    id: 'task-board',
-    order: 110,
+  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
+    name: 'settings.plugin.item',
+    key: TASK_BOARD_NS,
     locale: NS,
     inject: () => settingsCard.inject(),
   }, TaskBoardSettingsCard))

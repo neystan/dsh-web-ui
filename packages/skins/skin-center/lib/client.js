@@ -2453,7 +2453,7 @@ window.__ModuleLoader__.load({
 		];
 		/**
 		* Register the skin-center dictionaries, the body scope attribute, and the
-		* Skins plugin card inside the Web UI plugin group.
+		* Skins plugin card inside the official rc.7 keyed settings slot.
 		* @param ctx - client root context.
 		*/
 		function apply(ctx) {
@@ -2468,9 +2468,8 @@ window.__ModuleLoader__.load({
 				};
 			}, "ui-skin-center: body scope");
 			const theme = ctx.get("theme");
-			const binder = ctx.get("webUiSettings") ?? ctx.settingsScope;
-			const backgroundScope = binder.bind({ namespace: SKIN_BACKGROUND_NS });
-			const customThemeScope = binder.bind({ namespace: CUSTOM_THEME_NS });
+			const backgroundScope = ctx.settingsScope.bind({ namespace: SKIN_BACKGROUND_NS });
+			const customThemeScope = ctx.settingsScope.bind({ namespace: CUSTOM_THEME_NS });
 			const background = new BackgroundController(backgroundScope);
 			const customTheme = new CustomThemeController(customThemeScope, document.body, activeSkinEntry() === void 0);
 			const controller = new TryOnController({ appearance: {
@@ -2501,10 +2500,9 @@ window.__ModuleLoader__.load({
 				},
 				background
 			});
-			ctx.slots.inject("web-ui.plugin.item", () => ctx.slots.register({
-				name: "web-ui.plugin.item",
-				id: "skins",
-				order: 110,
+			ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
+				name: "settings.plugin.item",
+				key: SKIN_BACKGROUND_NS,
 				locale: NS,
 				inject: injected
 			}, SkinCenter));

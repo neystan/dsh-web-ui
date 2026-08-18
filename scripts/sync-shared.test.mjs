@@ -19,13 +19,13 @@ test('header/strip round-trips every file kind', () => {
   }
 })
 
-test('copies cover the settings trio for five consumers plus host helpers', () => {
+test('copies cover the settings trio for three consumers plus host helpers', () => {
   const entries = copyEntries()
-  assert.equal(entries.length, 19)
-  const clientTrio = entries.filter(entry => entry.target.includes('/src/client/'))
-  assert.equal(clientTrio.length, 15)
-  const hostCopies = entries.filter(entry => entry.target.includes('/src/host/') || entry.target.includes('/src/dsh-home.ts'))
-  assert.equal(hostCopies.length, 4)
+  assert.equal(entries.length, 12)
+  const clientTrio = entries.filter(entry => /[\\/]src[\\/]client[\\/]/.test(entry.target))
+  assert.equal(clientTrio.length, 9)
+  const hostCopies = entries.filter(entry => /[\\/]src[\\/]host[\\/]/.test(entry.target) || /[\\/]src[\\/]dsh-home\.ts$/.test(entry.target))
+  assert.equal(hostCopies.length, 3)
 })
 
 test('checkSync detects drift and applySync repairs it', async () => {

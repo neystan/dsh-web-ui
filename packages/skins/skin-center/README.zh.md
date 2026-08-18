@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-`@neystan/dsh-client-ui-skin-center`（cordis 插件 id `ui-skin-center`）把皮肤列表/试穿/应用内嵌进真实 dsh Web GUI 的插件配置页，作为「Web UI 插件」组里的一张卡片（设置 → 插件配置 → Web UI 插件 → 皮肤中心），与 task-board / pet / live-stats 等全家桶插件同一套槽位（`web-ui.plugin.item`），不占设置页一级导航。
+`@neystan/dsh-client-ui-skin-center`（cordis 插件 id `ui-skin-center`）把皮肤列表/试穿/应用内嵌进真实 dsh Web GUI 的插件配置页，直接注册到 DSH rc.7 keyed `settings.plugin.item` 槽位，并以 `skin-background` 作为命名空间键，与其它插件卡片并列显示，不占设置页一级导航。
 
 - 列表：展示独立的「官方默认」恢复入口，以及 11 个主题：10 个内置皮肤和 1 个自定义主题。所有主题使用相同卡片、试穿 / 应用按钮、激活标记、tagline 和强调色圆点；自定义卡额外提供编辑按钮。
 - 试穿：点击「试穿」后按需加载内置皮肤的 client bundle——host 路由 `/api/skin-center/bundle/<id>` 以同源 script 提供 `lib/client.js`（内核加载插件的同一机制），factory 注册到页面自己的 `window.__ModuleLoader__`，`window.__DSH_MODULES__.import` 物化（不是模拟器、不用 eval）。官方和自定义主题使用同一套表面生命周期，不加载用户 bundle。外观立即切换且不刷新网页；「退出试穿」恢复之前的样式、DOM、favicon、标题、body 内联样式、自定义 token 和背景。

@@ -42,7 +42,7 @@ export interface SkinCenterInjected {
 
 /** Plugin-card component props: group-item runtime share + locale seat + injected face. */
 export type SkinCenterComponentProps =
-  PropsRuntime<'web-ui.plugin.item'> & PropsLocale<'skinCenter'> & SkinCenterInjected
+  PropsRuntime<'settings.plugin.item'> & PropsLocale<'skinCenter'> & SkinCenterInjected
 
 /** Bring the editor into view without scrolling the settings dialog header away. */
 export function revealThemeEditor(root: Document = document): void {

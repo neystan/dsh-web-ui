@@ -27,8 +27,8 @@ test('packageFiles: walks packages/ and packages/skins/ non-recursively', () => 
     writeFileSync(join(dir, 'packages/dsh-skins/skins/qq98/package.json'), JSON.stringify({ name: 'nested', version: '0.1.15' }))
     const files = packageFiles(dir)
     assert.deepEqual(files, [
-      join(dir, 'packages/dsh-skins/package.json'),
       join(dir, 'packages/dsh-pet/package.json'),
+      join(dir, 'packages/dsh-skins/package.json'),
       join(dir, 'packages/skins/miku/package.json'),
       join(dir, 'packages/skins/skin-center/package.json'),
     ])

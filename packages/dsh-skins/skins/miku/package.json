@@ -1,6 +1,6 @@
 {
   "name": "@neystan/dsh-client-ui-skin-miku",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Bundled skin inside @neystan/dsh-skins (@neystan/dsh-client-ui-skin-miku).",
   "type": "module",
   "main": "lib/index.js",

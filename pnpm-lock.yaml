@@ -404,9 +404,6 @@ importers:
       '@neystan/dsh-client-ui-task-board':
         specifier: workspace:*
         version: link:../dsh-task-board
-      '@neystan/dsh-client-ui-web-ui-settings':
-        specifier: workspace:*
-        version: link:../dsh-web-ui-settings
       '@neystan/dsh-pet':
         specifier: workspace:*
         version: link:../dsh-pet

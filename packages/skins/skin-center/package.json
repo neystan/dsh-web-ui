@@ -1,7 +1,7 @@
 {
   "name": "@neystan/dsh-client-ui-skin-center",
   "description": "In-GUI skin center for dsh web with ten bundled skins, an independent editable custom theme, live no-refresh try-on, global backgrounds, and one-click persisted apply.",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

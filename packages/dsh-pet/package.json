@@ -1,7 +1,7 @@
 {
   "name": "@neystan/dsh-pet",
   "description": "鲸鱼娘宠物插件 for the dsh web GUI: a soft healing whale-girl companion with model-activity animations, petting/feeding interactions, shared affinity, and one validated custom-pet import slot",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "type": "module",
   "packageManager": "pnpm@11.7.0",
   "engines": {
