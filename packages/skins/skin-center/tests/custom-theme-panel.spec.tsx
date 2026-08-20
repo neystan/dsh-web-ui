@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from 'react-dom/test-utils'
+import { act, Simulate } from 'react-dom/test-utils'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
@@ -21,6 +21,11 @@ function scope(): CustomThemeScope {
   return result as unknown as CustomThemeScope
 }
 
+function inputValue(field: HTMLInputElement, value: string): void {
+  field.value = value
+  Simulate.change(field)
+}
+
 describe('custom theme card', () => {
   let host: HTMLDivElement
   let root: ReturnType<typeof createRoot>
@@ -35,7 +40,7 @@ describe('custom theme card', () => {
       exitTryOn: vi.fn(async () => null),
       getState: () => runtimeState,
     },
-    subscribe: (listener: () => void) => { return () => listener },
+    subscribe: (_listener: () => void) => () => {},
   }
   const t = (key: SkinCenterKey): string => zh[key]
 
@@ -76,20 +81,54 @@ describe('custom theme card', () => {
     expect(switchTo).toHaveBeenCalledWith(null, null)
   })
 
-  it('allows a hex field to be edited character by character before blur commits it', async () => {
+  it('allows a hex field to be edited character by character before blur commits it', () => {
     const edit = [...host.querySelectorAll('button')].find(button => button.textContent === zh.editTheme)
     act(() => { edit?.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
     const field = [...host.querySelectorAll('input[type="text"]')].find(input => input.getAttribute('aria-label') === `${zh.customThemeAccent} hex`) as HTMLInputElement
     expect(field).toBeTruthy()
-    act(() => {
-      field.value = '#1'
-      field.dispatchEvent(new Event('input', { bubbles: true }))
-      field.value = '#12'
-      field.dispatchEvent(new Event('input', { bubbles: true }))
-      field.value = '#123456'
-      field.dispatchEvent(new Event('input', { bubbles: true }))
-      field.dispatchEvent(new Event('blur', { bubbles: true }))
-    })
+    act(() => { inputValue(field, '#1') })
+    act(() => { inputValue(field, '#12') })
+    act(() => { inputValue(field, '#123456') })
+    act(() => { Simulate.blur(field) })
     expect(customTheme.profile().accent).toBe('#123456')
+  })
+
+  it('keeps the color picker on the last valid color while the hex draft is incomplete', () => {
+    const edit = [...host.querySelectorAll('button')].find(button => button.textContent === zh.editTheme)
+    act(() => { edit?.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    const text = host.querySelector(`input[aria-label="${zh.customThemeAccent} hex"]`) as HTMLInputElement
+    const picker = host.querySelector(`input[type="color"][aria-label="${zh.customThemeAccent}"]`) as HTMLInputElement
+    const previous = customTheme.profile().accent
+
+    act(() => { inputValue(text, '#1') })
+
+    expect(text.value).toBe('#1')
+    expect(picker.value).toBe(previous)
+    expect(customTheme.profile().accent).toBe(previous)
+  })
+
+  it('writes a valid hex color once per input event', () => {
+    const edit = [...host.querySelectorAll('button')].find(button => button.textContent === zh.editTheme)
+    act(() => { edit?.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    const text = host.querySelector(`input[aria-label="${zh.customThemeAccent} hex"]`) as HTMLInputElement
+    const set = vi.spyOn(customTheme, 'set')
+
+    act(() => { inputValue(text, '#123456') })
+
+    expect(set).toHaveBeenCalledTimes(1)
+    expect(set).toHaveBeenCalledWith('accent', '#123456')
+  })
+
+  it('exposes the light and dark selectors as pressed buttons rather than incomplete tabs', () => {
+    const edit = [...host.querySelectorAll('button')].find(button => button.textContent === zh.editTheme)
+    act(() => { edit?.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    const group = host.querySelector('[role="group"]')
+    const light = [...host.querySelectorAll('button')].find(button => button.textContent === zh.customThemeLight)
+    const dark = [...host.querySelectorAll('button')].find(button => button.textContent === zh.customThemeDark)
+
+    expect(group?.getAttribute('aria-label')).toBe(zh.theme)
+    expect(light?.getAttribute('aria-pressed')).toBe('true')
+    expect(dark?.getAttribute('aria-pressed')).toBe('false')
+    expect(host.querySelector('[role="tablist"], [role="tab"]')).toBeNull()
   })
 })

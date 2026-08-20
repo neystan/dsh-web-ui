@@ -19,7 +19,7 @@ import { SKIN_WALLPAPER_NS, WallpaperController, installBootRestore } from './wa
 import { en, zh, type SkinCenterKey } from './locales.ts'
 import { bootSkinRuntime } from './runtime/boot.ts'
 import { CustomThemeController } from './custom-theme-controller.ts'
-import { SKIN_CUSTOM_THEME_NS } from './custom-theme.ts'
+import { SKIN_CUSTOM_THEME_NS, type CustomThemeConfig } from './custom-theme.ts'
 
 export type { SkinCenterComponentProps, SkinCenterInjected } from './SkinCenter.tsx'
 export { bootSkinRuntime } from './runtime/boot.ts'
@@ -77,17 +77,7 @@ export function apply(ctx: ClientContext): void {
   const background = new BackgroundController(backgroundScope)
   // Tear the blur element + observer down when this plugin's fiber goes away.
   ctx.effect(() => () => background.dispose(), 'ui-skin-center: background dispose')
-  const customThemeScope = binder.bind<{
-    lightAccent?: string
-    lightBackground?: string
-    lightForeground?: string
-    lightContrast?: number
-    darkAccent?: string
-    darkBackground?: string
-    darkForeground?: string
-    darkContrast?: number
-    applied?: boolean
-  }>({ namespace: SKIN_CUSTOM_THEME_NS })
+  const customThemeScope = binder.bind<CustomThemeConfig>({ namespace: SKIN_CUSTOM_THEME_NS })
   const customTheme = new CustomThemeController(customThemeScope)
   customTheme.setScheme(theme.getTheme().active.colorScheme === 'dark' ? 'dark' : 'light')
   ctx.effect(() => () => customTheme.dispose(), 'ui-skin-center: custom theme dispose')

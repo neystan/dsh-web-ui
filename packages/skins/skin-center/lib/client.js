@@ -159,7 +159,7 @@ window.__ModuleLoader__.load({
 					className: skin_center_module_css_default.officialThemeInputRow,
 					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
 						type: "color",
-						value: draftColors[key],
+						value: /^#[0-9a-f]{6}$/i.test(draftColors[key]) ? draftColors[key] : profile[key],
 						"aria-label": label,
 						onChange: (event) => {
 							setColor(key, event.target.value);
@@ -170,9 +170,6 @@ window.__ModuleLoader__.load({
 						"aria-label": `${label} hex`,
 						onChange: (event) => {
 							setColor(key, event.target.value);
-						},
-						onInput: (event) => {
-							setColor(key, event.currentTarget.value);
 						},
 						onBlur: () => {
 							commitColor(key);
@@ -249,7 +246,7 @@ window.__ModuleLoader__.load({
 						children: [
 							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 								className: skin_center_module_css_default.themeRow,
-								role: "tablist",
+								role: "group",
 								"aria-label": t("theme"),
 								children: [
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
@@ -258,8 +255,7 @@ window.__ModuleLoader__.load({
 									}),
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
 										type: "button",
-										role: "tab",
-										"aria-selected": scheme === "light",
+										"aria-pressed": scheme === "light",
 										className: `${skin_center_module_css_default.themeButton} ${scheme === "light" ? skin_center_module_css_default.themeButtonActive : ""}`,
 										onClick: () => {
 											customTheme.setScheme("light");
@@ -268,8 +264,7 @@ window.__ModuleLoader__.load({
 									}),
 									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
 										type: "button",
-										role: "tab",
-										"aria-selected": scheme === "dark",
+										"aria-pressed": scheme === "dark",
 										className: `${skin_center_module_css_default.themeButton} ${scheme === "dark" ? skin_center_module_css_default.themeButtonActive : ""}`,
 										onClick: () => {
 											customTheme.setScheme("dark");

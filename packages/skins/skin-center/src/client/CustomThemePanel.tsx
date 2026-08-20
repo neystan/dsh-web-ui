@@ -87,7 +87,7 @@ export function CustomThemePanel({ t, runtime, theme, customTheme }: CustomTheme
       <span className={css.officialThemeInputRow}>
         <input
           type="color"
-          value={draftColors[key]}
+          value={/^#[0-9a-f]{6}$/i.test(draftColors[key]) ? draftColors[key] : profile[key]}
           aria-label={label}
           onChange={(event) => { setColor(key, event.target.value) }}
         />
@@ -96,7 +96,6 @@ export function CustomThemePanel({ t, runtime, theme, customTheme }: CustomTheme
           value={draftColors[key]}
           aria-label={`${label} hex`}
           onChange={(event) => { setColor(key, event.target.value) }}
-          onInput={(event) => { setColor(key, event.currentTarget.value) }}
           onBlur={() => { commitColor(key) }}
         />
       </span>
@@ -131,12 +130,12 @@ export function CustomThemePanel({ t, runtime, theme, customTheme }: CustomTheme
       </div>
       {editing && (
         <div className={css.customThemeEditor} data-custom-theme-editor="true">
-          <div className={css.themeRow} role="tablist" aria-label={t('theme')}>
+          <div className={css.themeRow} role="group" aria-label={t('theme')}>
             <span className={css.themeLabel}>{t('theme')}</span>
-            <button type="button" role="tab" aria-selected={scheme === 'light'} className={`${css.themeButton} ${scheme === 'light' ? css.themeButtonActive : ''}`} onClick={() => { customTheme.setScheme('light') }}>
+            <button type="button" aria-pressed={scheme === 'light'} className={`${css.themeButton} ${scheme === 'light' ? css.themeButtonActive : ''}`} onClick={() => { customTheme.setScheme('light') }}>
               {t('customThemeLight')}
             </button>
-            <button type="button" role="tab" aria-selected={scheme === 'dark'} className={`${css.themeButton} ${scheme === 'dark' ? css.themeButtonActive : ''}`} onClick={() => { customTheme.setScheme('dark') }}>
+            <button type="button" aria-pressed={scheme === 'dark'} className={`${css.themeButton} ${scheme === 'dark' ? css.themeButtonActive : ''}`} onClick={() => { customTheme.setScheme('dark') }}>
               {t('customThemeDark')}
             </button>
           </div>
