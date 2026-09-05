@@ -241,8 +241,11 @@ export class PanelLayoutController {
     el.style.cursor = 'col-resize'
     el.style.width = `${hitWidth}px`
     if (reverse) {
-      // The preview handle extends LEFT of the preview region's left edge.
-      el.style.marginLeft = `-${hitWidth}px`
+      // Keep the grab zone on the panel side of the boundary so it can never
+      // overlay the chat column's composer send/stop button. Drag direction
+      // is unaffected (drag.ts computes width from the pointer delta and the
+      // reverse flag, never from the element position).
+      el.style.marginLeft = '0'
     }
     el.addEventListener('pointerdown', (event: PointerEvent) => {
       const isExplorer = kind === 'explorer'
@@ -355,7 +358,7 @@ export class PanelLayoutController {
     if (this.explorerHandle !== null) {
       const left = Math.round(width - explorer)
       this.explorerHandle.style.left = `${left}px`
-      this.explorerHandle.style.marginLeft = `${-EXPLORER_HANDLE_WIDTH / 2}px`
+      this.explorerHandle.style.marginLeft = '0'
       this.explorerHandle.style.display = explorer > 0 && state.root !== '' ? 'block' : 'none'
     }
     if (this.previewHandle !== null) {
